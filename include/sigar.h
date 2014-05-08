@@ -48,6 +48,8 @@ extern "C" {
 
 #if defined(WIN32)
 
+typedef unsigned __int16 sigar_uint16_t;
+
 typedef unsigned __int32 sigar_uint32_t;
 
 typedef unsigned __int64 sigar_uint64_t;
@@ -58,6 +60,8 @@ typedef __int64 sigar_int64_t;
 
 #elif ULONG_MAX > 4294967295UL
 
+typedef unsigned short sigar_uint16_t;
+
 typedef unsigned int sigar_uint32_t;
 
 typedef unsigned long sigar_uint64_t;
@@ -67,6 +71,8 @@ typedef int sigar_int32_t;
 typedef long sigar_int64_t;
 
 #else
+
+typedef unsigned short sigar_uint16_t;
 
 typedef unsigned int sigar_uint32_t;
 
@@ -223,6 +229,7 @@ SIGAR_DECLARE(int) sigar_uptime_get(sigar_t *sigar,
 
 typedef struct {
     double loadavg[3];
+	int loadavg_result[3];
     sigar_uint32_t processor_queue;
 } sigar_loadavg_t;
 
@@ -997,49 +1004,50 @@ SIGAR_DECLARE(char *) sigar_password_get(const char *prompt);
 typedef struct {
 	sigar_int64_t stime;
 	float         value;
-} rma_sample_t;
+} sigar_rma_sample_t;
 
 typedef struct {
 
 	/* Elements configured by the caller. */
-	int element_count;  /* Number of elements in the ring buffer. */
+	sigar_uint16_t element_count;  /* Number of elements in the ring buffer. */
 
 	/* Internal items for tracking. */
-	rma_sample_t *samples;  /* Ring buffer sample set.  */
+	sigar_rma_sample_t *samples;  /* Ring buffer sample set.  */
 	int current_pos;        /* Current index location.  */
 
-} sigar_rma_stat_handle_t;
+} sigar_rma_stat_t;
 
-SIGAR_DECLARE(sigar_rma_stat_handle_t *)
-sigar_rma_init(sigar_t *sigar,
-               int max_average_time);
+typedef struct {
+	sigar_uint16_t max_average_time;
+} sigar_rma_stat_opts_t;
 
-SIGAR_DECLARE(void)
-sigar_rma_add_sample(sigar_t *sigar,
-                     sigar_rma_stat_handle_t * rma,
+SIGAR_DECLARE(int) sigar_rma_open(sigar_rma_stat_t **rma, sigar_rma_stat_opts_t *rma_opts);
+
+SIGAR_DECLARE(int) sigar_rma_close(sigar_rma_stat_t *rma);
+
+SIGAR_DECLARE(int)
+sigar_rma_add_sample(sigar_rma_stat_t * rma,
                      float value,
                      sigar_int64_t cur_time_sec);
 
-SIGAR_DECLARE(void)
-sigar_rma_add_fetch_std_sample(sigar_t *sigar,
-                               sigar_rma_stat_handle_t * rma,
+SIGAR_DECLARE(int)
+sigar_rma_add_fetch_std_sample(sigar_rma_stat_t * rma,
                                float value,
                                sigar_int64_t cur_time_sec,
                                sigar_loadavg_t *loadavg);
 
-SIGAR_DECLARE(void)
-sigar_rma_add_fetch_custom_sample(sigar_t *sigar,
-                                  sigar_rma_stat_handle_t * rma,
+SIGAR_DECLARE(int)
+sigar_rma_add_fetch_custom_sample(sigar_rma_stat_t * rma,
                                   float value,
                                   sigar_int64_t cur_time_sec,
                                   sigar_loadavg_t *loadavg,
                                   int num_avgs);
 
 SIGAR_DECLARE(float)
-sigar_rma_get_average(sigar_t *sigar,
-                      sigar_rma_stat_handle_t * rma,
+sigar_rma_get_average(sigar_rma_stat_t * rma,
                       int rate,
-                      sigar_int64_t cur_time_sec);
+                      sigar_int64_t cur_time_sec,
+					  int *result);
 
 #ifdef __cplusplus
 }

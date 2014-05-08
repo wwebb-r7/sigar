@@ -598,7 +598,7 @@ struct sigar_t {
     sigar_kernel_t kernel;
     sigar_mpr_t mpr;
     sigar_win32_pinfo_t pinfo;
-    sigar_rma_stat_handle_t *rma_process_queue;
+    sigar_rma_stat_t *rma_process_queue;
     sigar_cache_t *netif_adapters;
     sigar_cache_t *netif_mib_rows;
     sigar_cache_t *netif_addr_rows;

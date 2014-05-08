@@ -562,6 +562,7 @@ int sigar_loadavg_get(sigar_t *sigar,
 
     for (i=0; i<3; i++) {
         loadavg->loadavg[i] = (double)kSYSTEM(loadavg_keys[i]) / FSCALE;
+        loadavg->loadavg_result[i] = 0;
     }
 
     return SIGAR_OK;
