@@ -23,7 +23,7 @@
  * Can be used internally to dump out table index/values.
  */
 
-static void rma_debug(sigar_rma_stat_handle_t *rma)
+static void rma_debug(sigar_rma_stat_t *rma)
 {
 	int i;
 	printf("Table element count   = %d\n", rma->element_count);
@@ -39,45 +39,58 @@ static void rma_debug(sigar_rma_stat_handle_t *rma)
 	}
 }
 
-SIGAR_DECLARE(sigar_rma_stat_handle_t *)
-sigar_rma_init(sigar_t *sigar, int max_average_time)
+SIGAR_DECLARE(int) sigar_rma_open(sigar_rma_stat_t **rma, sigar_rma_stat_opts_t *rma_opts)
 {
-	if (max_average_time <= 0) {
-		sigar_log_printf(sigar, SIGAR_LOG_ERROR,
-				 "sigar_rma_init: invalid max_average_time : %d",
-				 max_average_time);
-		return NULL;
-	}
+	int size;
 
-	sigar_rma_stat_handle_t *rma;
-	rma = calloc(1, sizeof(*rma));
+	if(!rma_opts || rma_opts->max_average_time == 0)
+		size = SIGAR_RMA_RATE_15_MIN;
+	else
+		size = rma_opts->max_average_time;
+
+	*rma = calloc(1, sizeof(sigar_rma_stat_t));
 
 	/* Allocate enough space to hold the longest period. */
 
-	rma->element_count = max_average_time;
+	(*rma)->element_count = size;
 
-	rma->samples = calloc(rma->element_count, sizeof(rma_sample_t));
-	rma->current_pos = 0;
+	(*rma)->samples = calloc((*rma)->element_count, sizeof(sigar_rma_sample_t));
+	(*rma)->current_pos = 0;
 
-	return rma;
+	return 0;
+}
+
+SIGAR_DECLARE(int) sigar_rma_close(sigar_rma_stat_t *rma)
+{
+	if(rma)
+	{
+		if(rma->samples)
+			free(rma->samples);
+		free(rma);
+	}
+	return 0;
 }
 
 /*
  * Add a sample and return the current 1m, 5m, 15m average
  */
 
-SIGAR_DECLARE(void)
-sigar_rma_add_fetch_std_sample(sigar_t *sigar, sigar_rma_stat_handle_t * rma,
-		float value, sigar_int64_t cur_time_sec, sigar_loadavg_t *loadavg)
+SIGAR_DECLARE(int)
+sigar_rma_add_fetch_std_sample(sigar_rma_stat_t * rma, float value,
+		sigar_int64_t cur_time_sec, sigar_loadavg_t *loadavg)
 {
-	sigar_rma_add_sample(sigar,  rma, value, cur_time_sec);
+	sigar_rma_add_sample(rma, value, cur_time_sec);
 
-	loadavg->loadavg[0] = sigar_rma_get_average(sigar, rma,
-			SIGAR_RMA_RATE_1_MIN, cur_time_sec);
-	loadavg->loadavg[1] = sigar_rma_get_average(sigar, rma,
-			SIGAR_RMA_RATE_5_MIN, cur_time_sec);
-	loadavg->loadavg[2] = sigar_rma_get_average(sigar, rma,
-			SIGAR_RMA_RATE_15_MIN, cur_time_sec);
+	loadavg->loadavg[0] = sigar_rma_get_average(rma,
+			SIGAR_RMA_RATE_1_MIN, cur_time_sec, &loadavg->loadavg_result[0]);
+
+	loadavg->loadavg[1] = sigar_rma_get_average(rma,
+			SIGAR_RMA_RATE_5_MIN, cur_time_sec, &loadavg->loadavg_result[1]);
+
+	loadavg->loadavg[2] = sigar_rma_get_average(rma,
+			SIGAR_RMA_RATE_15_MIN, cur_time_sec, &loadavg->loadavg_result[2]);
+
+	return 0;
 }
 
 /*
@@ -85,23 +98,28 @@ sigar_rma_add_fetch_std_sample(sigar_t *sigar, sigar_rma_stat_handle_t * rma,
  * requested and the sample sizes are passed in the loadavg field.
  */
 
-SIGAR_DECLARE(void)
-sigar_rma_add_fetch_custom_sample(sigar_t *sigar,
-		sigar_rma_stat_handle_t * rma, float value, sigar_int64_t cur_time_sec,
-		sigar_loadavg_t *loadavg, int num_avg)
+SIGAR_DECLARE(int)
+sigar_rma_add_fetch_custom_sample( sigar_rma_stat_t * rma, float value,
+		sigar_int64_t cur_time_sec, sigar_loadavg_t *loadavg, int num_avg)
 {
 	int i;
 	int avg_secs;
-	sigar_rma_add_sample(sigar,  rma, value, cur_time_sec);
+	int result = 0;
+
+	if((result = sigar_rma_add_sample(rma, value, cur_time_sec)) < 0)
+		return result;
 
     for (i = 0; i < num_avg; i++) {
 		avg_secs = loadavg->loadavg[i];
-		loadavg->loadavg[i] = sigar_rma_get_average(sigar, rma, avg_secs,
-				cur_time_sec);
+		loadavg->loadavg[i] = sigar_rma_get_average(rma, avg_secs,
+				cur_time_sec, &loadavg->loadavg_result[i]);
+		if(result)
+			break;
 	}
+	return result;
 }
 
-static int next_pos(sigar_rma_stat_handle_t * rma, int pos)
+static int next_pos(sigar_rma_stat_t * rma, int pos)
 {
 	pos++;
 	if (pos >= rma->element_count) {
@@ -110,7 +128,7 @@ static int next_pos(sigar_rma_stat_handle_t * rma, int pos)
 	return pos;
 }
 
-static int prev_pos(sigar_rma_stat_handle_t * rma, int pos)
+static int prev_pos(sigar_rma_stat_t * rma, int pos)
 {
 	pos--;
 	if (pos < 0) {
@@ -119,17 +137,15 @@ static int prev_pos(sigar_rma_stat_handle_t * rma, int pos)
 	return pos;
 }
 
-SIGAR_DECLARE(void)
-sigar_rma_add_sample(sigar_t *sigar, sigar_rma_stat_handle_t * rma,
+SIGAR_DECLARE(int)
+sigar_rma_add_sample(sigar_rma_stat_t * rma,
 		float value, sigar_int64_t cur_time_sec)
 {
 	if (rma == NULL) {
-		sigar_log_printf(sigar, SIGAR_LOG_ERROR,
-				"sigar_rma_add_sample: NULL sigar_rma_stat_handle_t");
-		return;
+		return -1;
 	}
 
-	rma_sample_t *sample = &rma->samples[rma->current_pos];
+	sigar_rma_sample_t *sample = &rma->samples[rma->current_pos];
 
    	sample->value = value;
 
@@ -140,20 +156,23 @@ sigar_rma_add_sample(sigar_t *sigar, sigar_rma_stat_handle_t * rma,
 	}
 
 	rma->current_pos = next_pos(rma, rma->current_pos);
+
+	return 0;
 }
 
 SIGAR_DECLARE(float)
-sigar_rma_get_average(sigar_t *sigar, sigar_rma_stat_handle_t * rma, int rate,
-		sigar_int64_t cur_time_sec)
+sigar_rma_get_average(sigar_rma_stat_t * rma, int rate,
+		sigar_int64_t cur_time_sec, int *result)
 {
 	float			avg = 0;
 	int				pos;
 	int				count;
-	rma_sample_t   *sample;
+	sigar_rma_sample_t   *sample;
+
+	*result = 0;
 
 	if (rma == NULL) {
-		sigar_log_printf(sigar, SIGAR_LOG_ERROR,
-			"sigar_rma_get_average: NULL sigar_rma_stat_handle_t");
+		*result = -1;
 		return 0.0;
 	}
 
@@ -176,9 +195,7 @@ sigar_rma_get_average(sigar_t *sigar, sigar_rma_stat_handle_t * rma, int rate,
 	}
 
 	if (count == 0) {
-		sigar_log_printf(sigar, SIGAR_LOG_ERROR,
-			"sigar_rma_get_average: Computed 0 elements for rate : %d",
-			rate);
+		*result = -1;
 		return 0.0;
 	}
 
