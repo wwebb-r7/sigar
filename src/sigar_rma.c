@@ -71,26 +71,6 @@ SIGAR_DECLARE(int) sigar_rma_close(sigar_rma_stat_t *rma)
 	return 0;
 }
 
-#ifdef JUNK
-SIGAR_DECLARE(sigar_rma_stat_t *)
-sigar_rma_init(sigar_uint16_t max_average_time)
-{
-
-	sigar_rma_stat_t *rma;
-	rma = calloc(1, sizeof(*rma));
-
-	/* Allocate enough space to hold the longest period. */
-
-	rma->element_count = max_average_time;
-
-	rma->samples = calloc(rma->element_count, sizeof(sigar_rma_sample_t));
-	rma->current_pos = 0;
-
-	return rma;
-}
-
-#endif
-
 /*
  * Add a sample and return the current 1m, 5m, 15m average
  */
@@ -99,22 +79,18 @@ SIGAR_DECLARE(int)
 sigar_rma_add_fetch_std_sample(sigar_rma_stat_t * rma, float value,
 		sigar_int64_t cur_time_sec, sigar_loadavg_t *loadavg)
 {
-	int result = 0;
 	sigar_rma_add_sample(rma, value, cur_time_sec);
 
 	loadavg->loadavg[0] = sigar_rma_get_average(rma,
-			SIGAR_RMA_RATE_1_MIN, cur_time_sec, &result);
-	if(result)
-		return result;
+			SIGAR_RMA_RATE_1_MIN, cur_time_sec, &loadavg->loadavg_result[0]);
 
 	loadavg->loadavg[1] = sigar_rma_get_average(rma,
-			SIGAR_RMA_RATE_5_MIN, cur_time_sec, &result);
-	if(result)
-		return result;
+			SIGAR_RMA_RATE_5_MIN, cur_time_sec, &loadavg->loadavg_result[1]);
 
 	loadavg->loadavg[2] = sigar_rma_get_average(rma,
-			SIGAR_RMA_RATE_15_MIN, cur_time_sec, &result);
-	return result;
+			SIGAR_RMA_RATE_15_MIN, cur_time_sec, &loadavg->loadavg_result[2]);
+
+	return 0;
 }
 
 /*
@@ -136,7 +112,7 @@ sigar_rma_add_fetch_custom_sample( sigar_rma_stat_t * rma, float value,
     for (i = 0; i < num_avg; i++) {
 		avg_secs = loadavg->loadavg[i];
 		loadavg->loadavg[i] = sigar_rma_get_average(rma, avg_secs,
-				cur_time_sec, &result);
+				cur_time_sec, &loadavg->loadavg_result[i]);
 		if(result)
 			break;
 	}

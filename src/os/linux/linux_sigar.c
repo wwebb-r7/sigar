@@ -512,7 +512,7 @@ int sigar_loadavg_get(sigar_t *sigar,
         return status;
     }
 
-	loadavg->loadavg_result[0] = loadavg->loadavg_result[1] = loadavg->loadavg_result[2] = 0;
+    loadavg->loadavg_result[0] = loadavg->loadavg_result[1] = loadavg->loadavg_result[2] = 0;
     loadavg->loadavg[0] = strtod(buffer, &ptr);
     loadavg->loadavg[1] = strtod(ptr, &ptr);
     loadavg->loadavg[2] = strtod(ptr, &ptr);

@@ -229,7 +229,7 @@ SIGAR_DECLARE(int) sigar_uptime_get(sigar_t *sigar,
 
 typedef struct {
     double loadavg[3];
-	int loadavg_result[3];
+    int loadavg_result[3];
     sigar_uint32_t processor_queue;
 } sigar_loadavg_t;
 
@@ -1047,7 +1047,7 @@ SIGAR_DECLARE(float)
 sigar_rma_get_average(sigar_rma_stat_t * rma,
                       int rate,
                       sigar_int64_t cur_time_sec,
-					  int *result);
+                      int *result);
 
 #ifdef __cplusplus
 }
