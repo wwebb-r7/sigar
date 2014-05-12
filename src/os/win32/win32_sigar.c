@@ -330,7 +330,7 @@ SIGAR_DECLARE(sigar_t *) sigar_new(void)
 }
 
 static sigar_wtsapi_t sigar_wtsapi = {
-	{ "wtsapi32.dll", NULL },
+    { "wtsapi32.dll", NULL },
     { "WTSEnumerateSessionsA", NULL },
     { "WTSFreeMemory", NULL },
     { "WTSQuerySessionInformationA", NULL },
@@ -338,7 +338,7 @@ static sigar_wtsapi_t sigar_wtsapi = {
 };
 
 static sigar_iphlpapi_t sigar_iphlpapi = {
-	{ "iphlpapi.dll", NULL },
+    { "iphlpapi.dll", NULL },
     { "GetIpForwardTable", NULL },
     { "GetIpAddrTable", NULL },
     { "GetIfTable", NULL },
@@ -357,21 +357,21 @@ static sigar_iphlpapi_t sigar_iphlpapi = {
 };
 
 static sigar_advapi_t sigar_advapi = {
-	{ "advapi32.dll", NULL },
+    { "advapi32.dll", NULL },
     { "ConvertStringSidToSidA", NULL },
     { "QueryServiceStatusEx", NULL },
     { NULL, NULL }
 };
 
 static sigar_ntdll_t sigar_ntdll = {
-	{ "ntdll.dll", NULL },
+    { "ntdll.dll", NULL },
     { "NtQuerySystemInformation", NULL },
     { "NtQueryInformationProcess", NULL },
     { NULL, NULL }
 };
 
 static sigar_psapi_t sigar_psapi = {
-	{ "psapi.dll", NULL },
+    { "psapi.dll", NULL },
     { "EnumProcessModules", NULL },
     { "EnumProcesses", NULL },
     { "GetModuleFileNameExA", NULL },
@@ -379,19 +379,19 @@ static sigar_psapi_t sigar_psapi = {
 };
 
 static sigar_psapi_t sigar_winsta = {
-	{ "winsta.dll", NULL },
+    { "winsta.dll", NULL },
     { "WinStationQueryInformationW", NULL },
     { NULL, NULL }
 };
 
 static sigar_psapi_t sigar_kernel = {
-	{ "kernel32.dll", NULL },
+    { "kernel32.dll", NULL },
     { "GlobalMemoryStatusEx", NULL },
     { NULL, NULL }
 };
 
 static sigar_mpr_t sigar_mpr = {
-	{ "mpr.dll", NULL },
+    { "mpr.dll", NULL },
     { "WNetGetConnectionA", NULL },
     { NULL, NULL }
 };
@@ -3865,10 +3865,10 @@ int sigar_os_sys_info_get(sigar_t *sigar,
              if (version.dwMinorVersion == 0 || version.dwMinorVersion ==1) {
                  vendor_name = "Windows 2008";
                  vendor_version = "2008";
-     	        code_name = "Longhorn Server";
-              }
+                 code_name = "Longhorn Server";
+             }
      	     else if (version.dwMinorVersion == 2) {
-      	    	vendor_name = "Windows 2012";
+                 vendor_name = "Windows 2012";
                  vendor_version = "2012";
                  code_name = "Windows Server 8";
      	     }

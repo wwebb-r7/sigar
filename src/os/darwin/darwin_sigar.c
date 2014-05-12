@@ -3633,14 +3633,14 @@ int sigar_os_sys_info_get(sigar_t *sigar,
     if (fp == NULL) {
         return SIGAR_ENOTIMPL;
     }
-	char str[1024];
-	int  count;
+    char str[1024];
+    int  count;
 
     char *val = fgets(str, sizeof(str) - 1, fp);
     pclose(fp);
-	count = sscanf(val, "%d.%d.%d", &version_major, &version_minor, &version_fix);
+    count = sscanf(val, "%d.%d.%d", &version_major, &version_minor, &version_fix);
 
-	if(count != 3)
+    if(count != 3)
         return SIGAR_ENOTIMPL;
 
     snprintf(sysinfo->vendor_version,

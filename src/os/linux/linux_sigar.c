@@ -1764,7 +1764,7 @@ int sigar_net_route_list_get(sigar_t *sigar,
     FILE *fp;
     char buffer[1024];
     char net_addr[128], gate_addr[128], mask_addr[128];
-	char *ptr;
+    char *ptr;
     int flags;
     sigar_net_route_t *route;
 
@@ -1778,10 +1778,10 @@ int sigar_net_route_list_get(sigar_t *sigar,
 
     ptr = fgets(buffer, sizeof(buffer), fp); /* skip header */
 
-	if (ptr == NULL)
+    if (ptr == NULL)
     {
         fclose(fp);
-		return -1;
+        return -1;
     }
 
     while (fgets(buffer, sizeof(buffer), fp)) {
@@ -1819,7 +1819,7 @@ int sigar_net_interface_stat_get(sigar_t *sigar, const char *name,
 {
     int found = 0;
     char buffer[BUFSIZ];
-	char *ptr;
+    char *ptr;
     FILE *fp = fopen(PROC_FS_ROOT "net/dev", "r");
 
     if (!fp) {
@@ -1830,7 +1830,7 @@ int sigar_net_interface_stat_get(sigar_t *sigar, const char *name,
     ptr = fgets(buffer, sizeof(buffer), fp);
     ptr = fgets(buffer, sizeof(buffer), fp);
     if (ptr == NULL)
-	{
+    {
         fclose(fp);
         return -1;
     }
@@ -1969,7 +1969,7 @@ static int proc_net_read(sigar_net_connection_walker_t *walker,
 {
     FILE *fp = NULL;
     char buffer[8192];
-	char *fptr;
+    char *fptr;
     sigar_t *sigar = walker->sigar;
     char *ptr = sigar->proc_net;
     int flags = walker->flags;
@@ -2472,7 +2472,7 @@ int sigar_arp_list_get(sigar_t *sigar,
 {
     FILE *fp;
     char buffer[1024];
-	char *ptr;
+    char *ptr;
     char net_addr[128], hwaddr[128], mask_addr[128];
     int flags, type, status;
     sigar_arp_t *arp;

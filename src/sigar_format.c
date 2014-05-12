@@ -159,7 +159,6 @@ SIGAR_DECLARE(char *) sigar_strerror(sigar_t *sigar, int err)
 char *sigar_strerror_get(int err, char *errbuf, int buflen)
 {
 #ifdef WIN32
-    // DWORD len;
 
     FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM |
                         FORMAT_MESSAGE_IGNORE_INSERTS,

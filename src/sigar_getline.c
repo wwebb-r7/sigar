@@ -675,7 +675,7 @@ gl_putc(int c)
     }
 #endif
 #endif
-	if (result < 0)
+    if (result < 0)
         printf("gl_putc : Write operation failed\n");
 }
 
@@ -685,7 +685,7 @@ static void
 gl_puts(char *buf)
 {
     int len = strlen(buf);
-	int result = 0;
+    int result = 0;
 
     if (gl_notty) return;
 #ifdef WIN32
@@ -698,7 +698,7 @@ gl_puts(char *buf)
 #else
     result = sigar_write(1, buf, len);
 #endif
-	if (result < 0)
+    if (result < 0)
         printf("gl_puts : Write operation failed\n");
 }
 
@@ -719,7 +719,7 @@ gl_error(char *buf)
 #else
     result = sigar_write(2, buf, len);
 #endif
-	if (result < 0)
+    if (result < 0)
         printf("gl_error : Write operation failed\n");
     exit(1);
 }
