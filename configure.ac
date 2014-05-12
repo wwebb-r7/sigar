@@ -24,6 +24,10 @@ AC_PROG_MAKE_SET
 AC_PROG_LIBTOOL
 AC_CONFIG_MACRO_DIR([m4])
 
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
+CFLAGS="$CFLAGS -Wall -Werror"
+
 AC_MSG_CHECKING([for os type ($host_os)])
 FRAMEWORK=
 case $host_os in

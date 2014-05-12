@@ -1403,7 +1403,7 @@ int sigar_proc_time_get(sigar_t *sigar, sigar_pid_t pid,
 
 #ifdef DARWIN
 /* thread state mapping derived from ps.tproj */
-static const char const thread_states[] = {
+static const char thread_states[] = {
     /*0*/ '-',
     /*1*/ SIGAR_PROC_STATE_RUN,
     /*2*/ SIGAR_PROC_STATE_ZOMBIE,
@@ -3249,7 +3249,7 @@ static int get_nfsstats(struct nfsstats *stats)
 }
 #endif
 
-#if defined(__OpenBSD__)
+#if defined(__OpenBSD__) || defined(DARWIN)
 typedef uint64_t rpc_cnt_t;
 #else
 typedef int rpc_cnt_t;
@@ -3623,29 +3623,25 @@ int sigar_os_sys_info_get(sigar_t *sigar,
 {
 #ifdef DARWIN
     char *codename = NULL;
-    SInt32 version, version_major, version_minor, version_fix;
+    SInt32 version_major, version_minor, version_fix;
 
     SIGAR_SSTRCPY(sysinfo->name, "MacOSX");
     SIGAR_SSTRCPY(sysinfo->vendor_name, "Mac OS X");
     SIGAR_SSTRCPY(sysinfo->vendor, "Apple");
 
-    if (Gestalt(gestaltSystemVersion, &version) == noErr) {
-        if (version >= 0x00001040) {
-            Gestalt('sys1' /*gestaltSystemVersionMajor*/, &version_major);
-            Gestalt('sys2' /*gestaltSystemVersionMinor*/, &version_minor);
-            Gestalt('sys3' /*gestaltSystemVersionBugFix*/, &version_fix);
-        }
-        else {
-            version_fix = version & 0xf;
-            version >>= 4;
-            version_minor = version & 0xf;
-            version >>= 4;
-            version_major = version - (version >> 4) * 6;
-        }
-    }
-    else {
+    FILE *fp = popen("/usr/bin/sw_vers -productVersion", "r");
+    if (fp == NULL) {
         return SIGAR_ENOTIMPL;
     }
+	char str[1024];
+	int  count;
+
+    char *val = fgets(str, sizeof(str) - 1, fp);
+    pclose(fp);
+	count = sscanf(val, "%d.%d.%d", &version_major, &version_minor, &version_fix);
+
+	if(count != 3)
+        return SIGAR_ENOTIMPL;
 
     snprintf(sysinfo->vendor_version,
              sizeof(sysinfo->vendor_version),
@@ -3676,6 +3672,12 @@ int sigar_os_sys_info_get(sigar_t *sigar,
             break;
           case 7:
             codename = "Lion";
+            break;
+          case 8:
+            codename = "Mountain Lion";
+            break;
+          case 9:
+            codename = "Mavericks";
             break;
           default:
             codename = "Unknown";

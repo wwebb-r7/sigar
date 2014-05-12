@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+#include <unistd.h>
 #include "sigar.h"
 #include "sigar_private.h"
 #include "sigar_util.h"
@@ -709,6 +710,7 @@ enum {
 static int sigar_sudo_file2str(const char *fname, char *buffer, int buflen)
 {
     FILE *fp;
+    char *fptr;
     struct stat sb;
 
     if (stat(fname, &sb) < 0) {
@@ -721,8 +723,11 @@ static int sigar_sudo_file2str(const char *fname, char *buffer, int buflen)
     if (!(fp = popen(buffer, "r"))) {
         return errno;
     }
-    (void)fgets(buffer, buflen, fp);
+    fptr = fgets(buffer, buflen, fp);
     pclose(fp);
+
+    if(fptr == NULL)
+        return -1;
 
     return SIGAR_OK;
 }
@@ -1132,7 +1137,7 @@ static int SIGAPI ptql_args_match(sigar_t *sigar,
     if (branch->op_flags & PTQL_OP_FLAG_GLOB) {
         int i;
         for (i=0; i<args.number; i++) {
-            matched = 
+            matched =
                 ptql_str_match(sigar, branch, args.data[i]);
 
             if (matched) {
@@ -1264,12 +1269,12 @@ static int SIGAPI ptql_env_match(sigar_t *sigar,
     procenv.data = &entry;
 
     status = sigar_proc_env_get(sigar, pid, &procenv);
-    if (status != SIGAR_OK) { 
+    if (status != SIGAR_OK) {
         return status;
     }
     else {
         if (entry.val) {
-            matched = 
+            matched =
                 ptql_str_match(sigar, branch, entry.val);
         }
     }
@@ -1724,7 +1729,7 @@ SIGAR_DECLARE(int) sigar_ptql_query_create(sigar_ptql_query_t **queryp,
             break;
         }
 
-        if (ptr) { 
+        if (ptr) {
             ptql = ++ptr;
         }
         else {

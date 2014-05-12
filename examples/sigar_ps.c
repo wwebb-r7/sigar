@@ -15,6 +15,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "sigar.h"
 
@@ -56,7 +57,7 @@ int main(int argc, char **argv) {
             continue;
         }
 
-        printf("%d %s\n", (long)pid, pstate.name);
+        printf("%d %s\n", (int)pid, pstate.name);
     }
 
     sigar_proc_list_destroy(sigar, &proclist);

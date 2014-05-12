@@ -39,10 +39,10 @@ int main(int argc, char **argv) {
 
     for (i=0; i<cpulist.number; i++) {
         sigar_cpu_t cpu = cpulist.data[i];
-        printf("CPU %d: User=" SIGAR_F_U64 " Sys=" SIGAR_F_U64
-               " Nice=" SIGAR_F_U64 " Idle=" SIGAR_F_U64 " Total="
-               SIGAR_F_U64 "\n", i, cpu.user, cpu.sys, cpu.nice, cpu.idle,
-               cpu.total);
+        printf("CPU %d: User = %lu Sys = %lu Nice = %lu Idle = %lu Total = %lu\n", 
+               i, (unsigned long)cpu.user, (unsigned long)cpu.sys, 
+               (unsigned long)cpu.nice, (unsigned long)cpu.idle, 
+               (unsigned long)cpu.total);
         /*...*/
     }
 

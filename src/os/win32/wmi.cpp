@@ -19,6 +19,7 @@
 #define _UNICODE
 #define _WIN32_DCOM
 
+#include <winsock2.h>
 #include <windows.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -129,7 +130,7 @@ HRESULT wmi_get_proc_string_property(sigar_t *sigar, DWORD pid, TCHAR * name, TC
 {
 	IWbemClassObject *obj;
 	VARIANT var;
-	HRESULT result; 
+	HRESULT result;
 
 	if(sigar->wmi_handle == NULL)
             return (E_INVALIDARG);
