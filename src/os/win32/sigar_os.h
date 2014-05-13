@@ -681,6 +681,11 @@ int sigar_file_version_get(sigar_file_version_t *version,
                            char *name,
                            sigar_proc_env_t *infocb);
 
+sigar_wmi_handle_t * wmi_handle_open(int *error);
+int wmi_query_sum_u32(sigar_t *sigar, const wchar_t * query,
+                      const wchar_t * attrib, sigar_uint32_t * sum,
+                      unsigned long *num_elems);
+
 #ifdef __cplusplus
 }
 #endif

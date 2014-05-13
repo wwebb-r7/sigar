@@ -233,7 +233,7 @@ static int (*gl_tab_hook)(char *buf, int prompt_width, int *loc) = gl_tab;
 
 /******************** imported interface *********************************/
 #ifdef DMALLOC
-/* reports leaks, which is the history buffer.  dont care */ 
+/* reports leaks, which is the history buffer.  dont care */
 #undef DMALLOC
 #endif
 #include "sigar_getline.h"
@@ -245,6 +245,7 @@ static int (*gl_tab_hook)(char *buf, int prompt_width, int *loc) = gl_tab;
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 
 /******************** internal interface *********************************/
 
@@ -325,9 +326,9 @@ static void     search_forw(int s);     /* look forw for current string */
 #endif
 
 #ifdef WIN32
-#  define MSDOS
-#  include <io.h>
-#  include <windows.h>
+#define MSDOS
+#include <io.h>
+#include <windows.h>
 #endif /* WIN32 */
 
 #ifdef __MWERKS__
@@ -410,6 +411,10 @@ sigar_getline_config(const char *which, int value)
 static void
 gl_char_init()                  /* turn off input echo */
 {
+    // Bypass some compiler warnings
+    gl_suspc = 0;
+    gl_dsuspc = 0;
+
     if (gl_notty) return;
 #ifdef unix
 #ifdef TIOCGETP                 /* BSD */
@@ -521,7 +526,7 @@ gl_char_cleanup()               /* undo effects of gl_char_init */
 int pause_()
 {
  static HANDLE hConsoleInput = NULL;
- static iCharCount = 0;
+ static int iCharCount = 0;
  static int chLastChar = 0;
 
  DWORD cRead;
@@ -651,6 +656,7 @@ static void
 gl_putc(int c)
 {
     char   ch = c;
+    int    result = 0;
 
     if (gl_notty) return;
 
@@ -660,16 +666,18 @@ gl_putc(int c)
        CharToOemBuff((char const *)&c,&ch,1);
 #endif
 
-       sigar_write(1, &ch, 1);
+       result = sigar_write(1, &ch, 1);
     }
 #if defined(unix) || defined(MSDOS) || defined(WIN32) || defined(R__MWERKS)
 #ifdef TIOCSETP         /* BSD in RAW mode, map NL to NL,CR */
     if (ch == '\n') {
         ch = '\r';
-        sigar_write(1, &ch, 1);
+        result = sigar_write(1, &ch, 1);
     }
 #endif
 #endif
+    if (result < 0)
+        printf("gl_putc : Write operation failed\n");
 }
 
 /******************** fairly portable part *********************************/
@@ -678,36 +686,42 @@ static void
 gl_puts(char *buf)
 {
     int len = strlen(buf);
+    int result = 0;
 
     if (gl_notty) return;
 #ifdef WIN32
     {
      char *OemBuf = (char *)malloc(2*len);
      CharToOemBuff(buf,OemBuf,len);
-     sigar_write(1, OemBuf, len);
+     result = sigar_write(1, OemBuf, len);
      free(OemBuf);
     }
 #else
-    sigar_write(1, buf, len);
+    result = sigar_write(1, buf, len);
 #endif
+    if (result < 0)
+        printf("gl_puts : Write operation failed\n");
 }
 
 static void
 gl_error(char *buf)
 {
     int len = strlen(buf);
+	int result = 0;
 
     gl_cleanup();
 #ifdef WIN32
     {
       char *OemBuf = (char *)malloc(2*len);
       CharToOemBuff(buf,OemBuf,len);
-      sigar_write(2, OemBuf, len);
+      result = sigar_write(2, OemBuf, len);
       free(OemBuf);
     }
 #else
-    sigar_write(2, buf, len);
+    result = sigar_write(2, buf, len);
 #endif
+    if (result < 0)
+        printf("gl_error : Write operation failed\n");
     exit(1);
 }
 
@@ -1418,13 +1432,23 @@ sigar_getline_histadd(char *buf)
 
                /* if more than HIST_SIZE lines, safe last 60 command and delete rest */
                if (gl_savehist > HIST_SIZE) {
-                  FILE *ftmp;
+                  FILE *ftmp = NULL;
+                  int fd = 0;
                   char tname[L_tmpnam];
                   char line[BUFSIZ];
 
                   fp = fopen(gl_histfile, "r");
-                  tmpnam(tname);
+                  strcpy(tname, "/tmp/sigar.XXXXXX");
+#ifdef WIN32
+                  _mktemp_s(tname, sizeof(tname));
                   ftmp = fopen(tname, "w");
+#else
+                  fd = mkstemp(tname);
+                  if (fd >= 0)
+                  {
+                      ftmp = fdopen(fd, "w");
+                  }
+#endif
                   if (fp && ftmp) {
                      int nline = 0;
                      while (fgets(line, BUFSIZ, fp)) {
@@ -1438,6 +1462,7 @@ sigar_getline_histadd(char *buf)
                   }
                   if (fp)   fclose(fp);
                   if (ftmp) fclose(ftmp);
+                  if (fd >= 0) close(fd);
 
                   /* copy back to history file */
                   fp   = fopen(gl_histfile, "w");

@@ -23,6 +23,7 @@
  * Can be used internally to dump out table index/values.
  */
 
+#ifdef DEBUG
 static void rma_debug(sigar_rma_stat_t *rma)
 {
 	int i;
@@ -38,6 +39,7 @@ static void rma_debug(sigar_rma_stat_t *rma)
 		}
 	}
 }
+#endif
 
 SIGAR_DECLARE(int) sigar_rma_open(sigar_rma_stat_t **rma, sigar_rma_stat_opts_t *rma_opts)
 {

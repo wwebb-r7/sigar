@@ -323,11 +323,11 @@ static int get_security_info(sigar_t *sigar,
     PSECURITY_DESCRIPTOR pdesc = NULL;
     SECURITY_INFORMATION sinfo =
         OWNER_SECURITY_INFORMATION |
-        GROUP_SECURITY_INFORMATION |        
+        GROUP_SECURITY_INFORMATION |
         DACL_SECURITY_INFORMATION;
     TRUSTEE ident = {NULL, NO_MULTIPLE_TRUSTEE, TRUSTEE_IS_SID};
     ACCESS_MASK acc;
-    SID_IDENTIFIER_AUTHORITY auth = SECURITY_WORLD_SID_AUTHORITY;
+    SID_IDENTIFIER_AUTHORITY auth = {SECURITY_WORLD_SID_AUTHORITY};
 
     retval = GetNamedSecurityInfo((char *)file,
                                   SE_FILE_OBJECT,
@@ -414,12 +414,12 @@ static int fileattrs_get(sigar_t *sigar,
                         OPEN_EXISTING,
                         flags,
                         NULL);
- 
+
     if (handle != INVALID_HANDLE_VALUE) {
         if (GetFileInformationByHandle(handle, &info)) {
             fileattrs->inode =
                 info.nFileIndexLow |
-                (info.nFileIndexHigh << 32);
+                (info.nFileIndexHigh << 31);
             fileattrs->device = info.dwVolumeSerialNumber;
             fileattrs->nlink  = info.nNumberOfLinks;
         }
@@ -532,7 +532,7 @@ static int dir_stat_get(sigar_t *sigar,
           case SIGAR_FILETYPE_DIR:
             ++dirstats->subdirs;
             if (recurse) {
-                status = 
+                status =
                     dir_stat_get(sigar, name,
                                  dirstats, recurse);
                 if (status != SIGAR_OK) {
@@ -761,7 +761,7 @@ static int dir_stat_get(sigar_t *sigar,
           case SIGAR_FILETYPE_DIR:
             ++dirstats->subdirs;
             if (recurse) {
-                status = 
+                status =
                     dir_stat_get(sigar, name,
                                  dirstats, recurse);
                 if (status != SIGAR_OK) {

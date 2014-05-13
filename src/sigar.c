@@ -18,11 +18,14 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #ifndef WIN32
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#else
+#include <conio.h>
 #endif
 #if defined(__OpenBSD__) || defined(__FreeBSD__)
 #include <netinet/in.h>
@@ -195,7 +198,7 @@ sigar_uint64_t get_io_diff(sigar_uint64_t current_value, sigar_uint64_t prev_val
    }
    io_diff = (( current_value - prev_value)/(double)time_diff)*SIGAR_MSEC;
    int_io_diff = (sigar_uint64_t)io_diff;
-   if (int_io_diff >=0) {
+   if (io_diff >=0) {
       return int_io_diff;
    }
    return 0;
@@ -224,7 +227,7 @@ SIGAR_DECLARE(int) sigar_proc_disk_io_get(sigar_t *sigar, sigar_pid_t pid,
     sigar_cached_proc_disk_io_t *prev;
     sigar_proc_cumulative_disk_io_t  cumulative_proc_disk_io;
     sigar_uint64_t time_now = sigar_time_now_millis();
-    sigar_uint64_t time_diff;
+    sigar_int64_t time_diff;
     int status, is_first_time;
 
     if (!sigar->proc_io) {
@@ -1153,9 +1156,10 @@ SIGAR_DECLARE(int) sigar_who_list_destroy(sigar_t *sigar,
 static char *getpass(const char *prompt)
 {
     static char password[BUFSIZ];
+	char *ptr;
 
     fputs(prompt, stderr);
-    fgets((char *)&password, sizeof(password), stdin);
+    ptr = fgets((char *)&password, sizeof(password), stdin);
 
     return (char *)&password;
 }
@@ -1496,7 +1500,7 @@ static void hwaddr_libdlpi_lookup(sigar_t *sigar, sigar_net_interface_config_t *
     dlpi_handle_t handle;
     dlpi_info_t linkinfo;
     uchar_t addr[DLPI_PHYSADDR_MAX];
-    uint_t alen = sizeof(addr);
+    size_t alen = sizeof(addr);
 
     if (dlpi_open(ifconfig->name, &handle, 0) != DLPI_SUCCESS) {
         return;
@@ -1881,6 +1885,7 @@ static int proc_net_interface_list_get(sigar_t *sigar,
      * check /proc/net/dev for any ioctl missed.
      */
     char buffer[BUFSIZ];
+    char *ptr;
     FILE *fp = fopen("/proc/net/dev", "r");
 
     if (!fp) {
@@ -1888,11 +1893,17 @@ static int proc_net_interface_list_get(sigar_t *sigar,
     }
 
     /* skip header */
-    fgets(buffer, sizeof(buffer), fp);
-    fgets(buffer, sizeof(buffer), fp);
+
+    int result = sigar_skip_file_lines(fp, 2);
+
+    if (result != SIGAR_OK)
+    {
+        fclose(fp);
+        return -1;
+    }
 
     while (fgets(buffer, sizeof(buffer), fp)) {
-        char *ptr, *dev;
+        char *dev;
 
         dev = buffer;
         while (isspace(*dev)) {
@@ -2156,7 +2167,6 @@ SIGAR_DECLARE(int) sigar_fqdn_get(sigar_t *sigar, char *name, int namelen)
     register int is_debug = SIGAR_LOG_IS_DEBUG(sigar);
     sigar_hostent_t data;
     struct hostent *p;
-    char domain[SIGAR_FQDN_LEN + 1];
 #ifdef WIN32
     int status = sigar_wsa_init(sigar);
 
@@ -2296,6 +2306,7 @@ SIGAR_DECLARE(int) sigar_fqdn_get(sigar_t *sigar, char *name, int namelen)
               "[fqdn] unresolved using gethostbyname.h_addr_list");
 
 #if !defined(WIN32) && !defined(NETWARE)
+    char domain[SIGAR_FQDN_LEN + 1];
     if (!IS_FQDN(name) && /* e.g. aix gethostname is already fqdn */
         (getdomainname(domain, sizeof(domain) - 1) == 0) &&
         (domain[0] != '\0') &&
