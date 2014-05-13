@@ -1438,16 +1438,16 @@ sigar_getline_histadd(char *buf)
                   char line[BUFSIZ];
 
                   fp = fopen(gl_histfile, "r");
-				  strcpy(tname, "/tmp/sigar.XXXXXX");
+                  strcpy(tname, "/tmp/sigar.XXXXXX");
 #ifdef WIN32
-				  _mktemp_s(tname, sizeof(tname));
-				  ftmp = fopen(tname, "w");
+                  _mktemp_s(tname, sizeof(tname));
+                  ftmp = fopen(tname, "w");
 #else
-				  fd = mkstemp(tname);
-				  if (fd >= 0)
-				  {
+                  fd = mkstemp(tname);
+                  if (fd >= 0)
+                  {
                       ftmp = fdopen(fd, "w");
-				  }
+                  }
 #endif
                   if (fp && ftmp) {
                      int nline = 0;
