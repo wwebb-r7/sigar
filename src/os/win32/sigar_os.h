@@ -610,6 +610,8 @@ struct sigar_t {
     int ht_enabled;
     int lcpu; //number of logical cpus
     int winnt;
+	/*  Items that windows returns deltas, but we need to keep cumlative counts for */
+	sigar_system_stats_t sys_stats;
 };
 
 #ifdef __cplusplus

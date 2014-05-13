@@ -707,7 +707,7 @@ static void
 gl_error(char *buf)
 {
     int len = strlen(buf);
-	int result = 0;
+    int result = 0;
 
     gl_cleanup();
 #ifdef WIN32

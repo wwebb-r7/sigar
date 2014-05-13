@@ -1140,7 +1140,10 @@ SIGAR_DECLARE(int) sigar_system_stats_get (sigar_t *sigar,
                 L"ContextSwitchesPerSec", &switches, &num_elems);
 
     if (status == SIGAR_OK)
-        system_stats->ctxt_switches = switches;
+    {
+        sigar->sys_stats.ctxt_switches += switches;
+        system_stats->ctxt_switches = sigar->sys_stats.ctxt_switches;
+    }
     else
         system_stats->ctxt_switches = SIGAR_FIELD_NOTIMPL;
 
@@ -1148,8 +1151,11 @@ SIGAR_DECLARE(int) sigar_system_stats_get (sigar_t *sigar,
                 L"SELECT InterruptsPerSec FROM Win32_PerfFormattedData_PerfOS_Processor",
                 L"InterruptsPerSec", &irq, &num_elems);
 
-	if (status == SIGAR_OK)
-		system_stats->irq =irq;
+    if (status == SIGAR_OK)
+    {
+        sigar->sys_stats.irq += irq;
+        system_stats->irq = sigar->sys_stats.irq;
+    }
 	else
 		system_stats->irq = SIGAR_FIELD_NOTIMPL;
 
