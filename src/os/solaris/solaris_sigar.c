@@ -912,7 +912,15 @@ static int ucb_ps_args_get(sigar_t *sigar, sigar_pid_t pid,
             return errno;
         }
         /* skip header */
-        (void)fgets(buffer, sizeof(buffer), fp);
+
+        int result = sigar_skip_file_lines(fp, 1);
+
+        if (result != SIGAR_OK)
+        {
+            pclose(fp);
+            return -1;
+        }
+
         if ((args = fgets(buffer, sizeof(buffer), fp))) {
             int len;
 

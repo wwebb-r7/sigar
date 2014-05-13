@@ -1893,8 +1893,14 @@ static int proc_net_interface_list_get(sigar_t *sigar,
     }
 
     /* skip header */
-    ptr = fgets(buffer, sizeof(buffer), fp);
-    ptr = fgets(buffer, sizeof(buffer), fp);
+
+    int result = sigar_skip_file_lines(fp, 2);
+
+    if (result != SIGAR_OK)
+    {
+        fclose(fp);
+        return -1;
+    }
 
     while (fgets(buffer, sizeof(buffer), fp)) {
         char *dev;

@@ -245,6 +245,7 @@ static int (*gl_tab_hook)(char *buf, int prompt_width, int *loc) = gl_tab;
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 
 /******************** internal interface *********************************/
 
@@ -325,9 +326,9 @@ static void     search_forw(int s);     /* look forw for current string */
 #endif
 
 #ifdef WIN32
-#  define MSDOS
-#  include <io.h>
-#  include <windows.h>
+#define MSDOS
+#include <io.h>
+#include <windows.h>
 #endif /* WIN32 */
 
 #ifdef __MWERKS__
@@ -1432,13 +1433,22 @@ sigar_getline_histadd(char *buf)
                /* if more than HIST_SIZE lines, safe last 60 command and delete rest */
                if (gl_savehist > HIST_SIZE) {
                   FILE *ftmp = NULL;
-                  char tname[L_tmpnam], *tptr;
+                  int fd = 0;
+                  char tname[L_tmpnam];
                   char line[BUFSIZ];
 
                   fp = fopen(gl_histfile, "r");
-                  tptr = tmpnam(tname);
-                  if (tptr != NULL)
-                      ftmp = fopen(tname, "w");
+				  strcpy(tname, "/tmp/sigar.XXXXXX");
+#ifdef WIN32
+				  _mktemp_s(tname, sizeof(tname));
+				  ftmp = fopen(tname, "w");
+#else
+				  fd = mkstemp(tname);
+				  if (fd >= 0)
+				  {
+                      ftmp = fdopen(fd, "w");
+				  }
+#endif
                   if (fp && ftmp) {
                      int nline = 0;
                      while (fgets(line, BUFSIZ, fp)) {
@@ -1452,6 +1462,7 @@ sigar_getline_histadd(char *buf)
                   }
                   if (fp)   fclose(fp);
                   if (ftmp) fclose(ftmp);
+                  if (fd >= 0) close(fd);
 
                   /* copy back to history file */
                   fp   = fopen(gl_histfile, "w");
