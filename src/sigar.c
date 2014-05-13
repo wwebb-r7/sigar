@@ -1263,10 +1263,10 @@ SIGAR_DECLARE(int) sigar_resource_limit_get(sigar_t *sigar,
 
     if (VirtualQuery((LPCVOID)&meminfo, &meminfo, sizeof(meminfo))) {
         rlimit->stack_cur =
-            (DWORD)&meminfo - (DWORD)meminfo.AllocationBase;
+            (size_t)&meminfo - (size_t)meminfo.AllocationBase;
         rlimit->stack_max =
-            ((DWORD)meminfo.BaseAddress + meminfo.RegionSize) -
-            (DWORD)meminfo.AllocationBase;
+            ((size_t)meminfo.BaseAddress + meminfo.RegionSize) -
+            (size_t)meminfo.AllocationBase;
     }
 
     rlimit->virtual_memory_max = rlimit->virtual_memory_cur =
