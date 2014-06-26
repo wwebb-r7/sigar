@@ -112,9 +112,9 @@ int sigar_os_open(sigar_t **sig)
     }
 
     if (0 == strncmp (name.version, "joyent", 6)) {
-      sigar->joyent = 1;
+        sigar->joyent = 1;
     } else {
-      sigar->joyent = 0;
+        sigar->joyent = 0;
     }
 
     if ((ptr = getenv("SIGAR_USE_UCB_PS"))) {
@@ -664,25 +664,25 @@ static int sigar_cpu_list_get_joyent(sigar_t *sigar, sigar_cpu_list_t *cpulist)
 
     ksp = kstat_lookup (sigar->kc, "zones", -1, znm);
     if (ksp) {
-      cpu = &cpulist->data[cpulist->number++];
-      SIGAR_ZERO(cpu);
+        cpu = &cpulist->data[cpulist->number++];
+        SIGAR_ZERO(cpu);
 
-      kstat_read (sigar->kc, ksp, NULL);
-      if (KSTAT_TYPE_NAMED != ksp->ks_type) {
-        return SIGAR_OK;
-      }
-
-      for (i = 0; i < ksp->ks_ndata; i++) {
-        kstat_named_t *kn = &((kstat_named_t *)ksp->ks_data)[i];
-
-        if (strEQ (kn->name, "nsec_sys")) {
-          cpu->sys = kn->value.ui64 / 1000000;
-        } else if (strEQ (kn->name, "nsec_user")) {
-          cpu->user = kn->value.ui64 / 1000000;
-        } else if (strEQ (kn->name, "nsec_waitrq")) {
-          cpu->wait = kn->value.ui64 / 1000000;
+        kstat_read (sigar->kc, ksp, NULL);
+        if (KSTAT_TYPE_NAMED != ksp->ks_type) {
+            return SIGAR_OK;
         }
-      }
+
+        for (i = 0; i < ksp->ks_ndata; i++) {
+            kstat_named_t *kn = &((kstat_named_t *)ksp->ks_data)[i];
+
+            if (strEQ (kn->name, "nsec_sys")) {
+                cpu->sys = kn->value.ui64 / 1000000;
+            } else if (strEQ (kn->name, "nsec_user")) {
+                cpu->user = kn->value.ui64 / 1000000;
+            } else if (strEQ (kn->name, "nsec_waitrq")) {
+                cpu->wait = kn->value.ui64 / 1000000;
+            }
+        }
     }
 
     return SIGAR_OK;
@@ -690,10 +690,11 @@ static int sigar_cpu_list_get_joyent(sigar_t *sigar, sigar_cpu_list_t *cpulist)
 
 int sigar_cpu_list_get(sigar_t *sigar, sigar_cpu_list_t *cpulist)
 {
-  if (sigar->joyent)
-    return sigar_cpu_list_get_joyent (sigar, cpulist);
-  else
-    return sigar_cpu_list_get_global (sigar, cpulist);
+    if (sigar->joyent) {
+        return sigar_cpu_list_get_joyent (sigar, cpulist);
+    } else {
+        return sigar_cpu_list_get_global (sigar, cpulist);
+    }
 }
 
 int sigar_uptime_get(sigar_t *sigar,
@@ -836,21 +837,21 @@ static int sigar_init_libproc(sigar_t *sigar)
 
 /* from libproc.h, not included w/ solaris distro */
 /* Error codes from Pgrab(), Pfgrab_core(), and Pgrab_core() */
-#define	G_STRANGE	-1	/* Unanticipated error, errno is meaningful */
-#define	G_NOPROC	1	/* No such process */
-#define	G_NOCORE	2	/* No such core file */
-#define	G_NOPROCORCORE	3	/* No such proc or core (for proc_arg_grab) */
-#define	G_NOEXEC	4	/* Cannot locate executable file */
-#define	G_ZOMB		5	/* Zombie process */
-#define	G_PERM		6	/* No permission */
-#define	G_BUSY		7	/* Another process has control */
-#define	G_SYS		8	/* System process */
-#define	G_SELF		9	/* Process is self */
-#define	G_INTR		10	/* Interrupt received while grabbing */
-#define	G_LP64		11	/* Process is _LP64, self is ILP32 */
-#define	G_FORMAT	12	/* File is not an ELF format core file */
-#define	G_ELF		13	/* Libelf error, elf_errno() is meaningful */
-#define	G_NOTE		14	/* Required PT_NOTE Phdr not present in core */
+#define G_STRANGE     -1    /* Unanticipated error, errno is meaningful */
+#define G_NOPROC       1    /* No such process */
+#define G_NOCORE       2    /* No such core file */
+#define G_NOPROCORCORE 3    /* No such proc or core (for proc_arg_grab) */
+#define G_NOEXEC       4    /* Cannot locate executable file */
+#define G_ZOMB         5    /* Zombie process */
+#define G_PERM         6    /* No permission */
+#define G_BUSY         7    /* Another process has control */
+#define G_SYS          8    /* System process */
+#define G_SELF         9    /* Process is self */
+#define G_INTR        10    /* Interrupt received while grabbing */
+#define G_LP64        11    /* Process is _LP64, self is ILP32 */
+#define G_FORMAT      12    /* File is not an ELF format core file */
+#define G_ELF         13    /* Libelf error, elf_errno() is meaningful */
+#define G_NOTE        14    /* Required PT_NOTE Phdr not present in core */
 
 static int sigar_pgrab(sigar_t *sigar, sigar_pid_t pid,
                        const char *func,
@@ -1604,9 +1605,9 @@ int sigar_file_system_list_get(sigar_t *sigar,
 
         SIGAR_SSTRCPY(fsp->dir_name, ent.mnt_mountp);
         if (sigar->joyent) {
-          SIGAR_SSTRCPY(fsp->dev_name, sigar->zonenm_short);
+            SIGAR_SSTRCPY(fsp->dev_name, sigar->zonenm_short);
         } else {
-          SIGAR_SSTRCPY(fsp->dev_name, ent.mnt_special);
+            SIGAR_SSTRCPY(fsp->dev_name, ent.mnt_special);
         }
         SIGAR_SSTRCPY(fsp->sys_type_name, ent.mnt_fstype);
         SIGAR_SSTRCPY(fsp->options, ent.mnt_mntopts);
@@ -1883,40 +1884,40 @@ int sigar_disk_usage_get(sigar_t *sigar, const char *name,
     SIGAR_DISK_STATS_INIT(disk);
 
     if (sigar->joyent) {
-      strncpy (znm, sigar->zonenm, 30);
-      znm[30] = 0;
+        strncpy (znm, sigar->zonenm, 30);
+        znm[30] = 0;
 
-      ksp = kstat_lookup (sigar->kc, "zone_vfs", -1, znm);
-      if (ksp) {
+        ksp = kstat_lookup (sigar->kc, "zone_vfs", -1, znm);
+        if (!ksp) {
+            return ENXIO;
+        }
+
         kstat_read (sigar->kc, ksp, NULL);
         if (KSTAT_TYPE_NAMED != ksp->ks_type) {
-          return ENXIO;
+            return ENXIO;
         }
 
         for (i = 0; i < ksp->ks_ndata; i++) {
-          kstat_named_t *kn = &((kstat_named_t *)ksp->ks_data)[i];
+            kstat_named_t *kn = &((kstat_named_t *)ksp->ks_data)[i];
 
-          if (strEQ (kn->name, "nread")) {
-            disk->read_bytes = kn->value.ui64;
-          } else if (strEQ (kn->name, "reads")) {
-            disk->reads = kn->value.ui64;
-          } else if (strEQ (kn->name, "rlentime")) {
-            disk->rtime = kn->value.ui64;
-          } else if (strEQ (kn->name, "nwritten")) {
-            disk->write_bytes = kn->value.ui64;
-          } else if (strEQ (kn->name, "writes")) {
-            disk->writes = kn->value.ui64;
-          } else if (strEQ (kn->name, "wlentime")) {
-            disk->qtime = disk->wtime = kn->value.ui64;
-          }
+            if (strEQ (kn->name, "nread")) {
+                disk->read_bytes = kn->value.ui64;
+            } else if (strEQ (kn->name, "reads")) {
+                disk->reads = kn->value.ui64;
+            } else if (strEQ (kn->name, "rlentime")) {
+                disk->rtime = kn->value.ui64;
+            } else if (strEQ (kn->name, "nwritten")) {
+                disk->write_bytes = kn->value.ui64;
+            } else if (strEQ (kn->name, "writes")) {
+                disk->writes = kn->value.ui64;
+            } else if (strEQ (kn->name, "wlentime")) {
+                disk->qtime = disk->wtime = kn->value.ui64;
+            }
         }
 
         disk->time = disk->rtime + disk->wtime;
         disk->snaptime = ksp->ks_snaptime;
         return SIGAR_OK;
-      } else {
-        return ENXIO;
-      }
     }
 
     if (!sigar->fsdev) {
@@ -2037,7 +2038,7 @@ int sigar_file_system_usage_get(sigar_t *sigar,
     fsusage->use_percent = sigar_file_system_usage_calc_used(sigar, fsusage);
 
     if (!sigar->joyent) {
-      sigar_disk_usage_get(sigar, dirname, &fsusage->disk);
+        sigar_disk_usage_get(sigar, dirname, &fsusage->disk);
     }
 
     return SIGAR_OK;
