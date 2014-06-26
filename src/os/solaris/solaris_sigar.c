@@ -773,14 +773,16 @@ int sigar_system_stats_get (sigar_t *sigar,
 
     for (i = 0; i < sigar->ncpu; i++) {
         cpu_stat = (cpu_stat_t *)sigar->ks.cpu[i]->ks_data;
-        info = &cpu_stat->cpu_sysinfo;
-        system_stats->ctxt_switches += info->pswitch;
-        system_stats->irq += info->intr;
-        /*
-         * Number of syscalls should give a fair indication of
-         * soft interrputs.
-        */
-        system_stats->soft_irq += info->syscall;
+        if (cpu_stat) {
+            info = &cpu_stat->cpu_sysinfo;
+            system_stats->ctxt_switches += info->pswitch;
+            system_stats->irq += info->intr;
+            /*
+             * Number of syscalls should give a fair indication of
+             * soft interrupts.
+             */
+            system_stats->soft_irq += info->syscall;
+        }
     }
 
     return SIGAR_OK;
