@@ -220,7 +220,6 @@ typedef struct sigar_vmusage64 {
 
 static int zone_mem_get(sigar_t *sigar, sigar_mem_t *mem)
 {
-    kstat_ctl_t *kc = sigar->kc; 
     kstat_t *ksp;
     char path[MAXPATHLEN];
     sigar_vmusage64_t result;
@@ -637,7 +636,6 @@ static int sigar_cpu_list_get_global(sigar_t *sigar, sigar_cpu_list_t *cpulist)
  */
 static int sigar_cpu_list_get_joyent(sigar_t *sigar, sigar_cpu_list_t *cpulist)
 {
-    kstat_ctl_t *kc = sigar->kc; 
     kstat_t *ksp;
     char znm[32];
     unsigned int i;
@@ -757,10 +755,10 @@ int sigar_system_stats_get (sigar_t *sigar,
 
     status =  sigar_cpu_list_get(sigar, &sigar->cpulist);
 
-	if(status != SIGAR_OK)
-		return SIGAR_ENOTIMPL;
+    if (status != SIGAR_OK)
+        return SIGAR_ENOTIMPL;
 
-	memset(system_stats, 0, sizeof(*system_stats));
+    memset(system_stats, 0, sizeof(*system_stats));
 
     for (i = 0; i < sigar->ncpu; i++) {
         cpu_stat = (cpu_stat_t *)sigar->ks.cpu[i]->ks_data;
@@ -1028,7 +1026,7 @@ int sigar_proc_state_get(sigar_t *sigar, sigar_pid_t pid,
 
     status = sigar_proc_fd_get(sigar, pid, &proc_fd_count );
 
-    if(status == SIGAR_OK)
+    if (status == SIGAR_OK)
         procstate->open_files = proc_fd_count.total;
 
     return SIGAR_OK;
