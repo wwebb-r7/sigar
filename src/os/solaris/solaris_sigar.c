@@ -111,11 +111,7 @@ int sigar_os_open(sigar_t **sig)
         sigar->solaris_version = 6;
     }
 
-    if (0 == strncmp (name.version, "joyent", 6)) {
-        sigar->joyent = 1;
-    } else {
-        sigar->joyent = 0;
-    }
+    sigar->joyent = !strncmp (name.version, "joyent", 6);
 
     if ((ptr = getenv("SIGAR_USE_UCB_PS"))) {
         sigar->use_ucb_ps = strEQ(ptr, "true");
@@ -550,7 +546,7 @@ static int sigar_cpu_list_get_global(sigar_t *sigar, sigar_cpu_list_t *cpulist)
             sigar_log_printf(sigar, SIGAR_LOG_ERROR,
                              "NULL ksp for cpu %d (id=%d)",
                              i, sigar->ks.cpuid[i]);
-            continue; /* shouldnot happen */
+            continue; /* should not happen */
         }
 
         if (kstat_read(kc, ksp, NULL) < 0) {
@@ -558,7 +554,7 @@ static int sigar_cpu_list_get_global(sigar_t *sigar, sigar_cpu_list_t *cpulist)
                              "kstat_read failed for cpu %d (id=%d): %s",
                              i, sigar->ks.cpuid[i],
                              sigar_strerror(sigar, errno));
-            continue; /* shouldnot happen */
+            continue; /* should not happen */
         }
 
         /*
