@@ -138,6 +138,7 @@ struct sigar_t {
     zoneid_t zoneid;
     char *zonenm;
     char *zonenm_short;
+    uint64_t cpu_prev_time, cpu_total;
 
     kstat_ctl_t *kc;
 
@@ -157,7 +158,7 @@ struct sigar_t {
         int mempages[KSTAT_MEMPAGES_MAX];
         int syspages[KSTAT_SYSPAGES_MAX];
     } koffsets;
-    
+
     int pagesize;
 
     time_t last_getprocs;

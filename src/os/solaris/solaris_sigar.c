@@ -683,6 +683,20 @@ static int sigar_cpu_list_get_joyent(sigar_t *sigar, sigar_cpu_list_t *cpulist)
                 cpu->wait = kn->value.ui64 / 1000000;
             }
         }
+
+        /*
+         * Prime a timestamp from the last time we got CPU metrics
+         */
+        uint64_t now = sigar_time_now_millis();
+        if (!sigar->cpu_prev_time) {
+            sigar->cpu_total = cpu->user + cpu->sys + cpu->wait;
+        } else {
+            uint64_t delta = now - sigar->cpu_prev_time;
+            sigar->cpu_total += delta;
+            cpu->total = sigar->cpu_total;
+            cpu->idle = sigar->cpu_total - (cpu->user + cpu->sys + cpu->wait);
+        }
+        sigar->cpu_prev_time = now;
     }
 
     return SIGAR_OK;
