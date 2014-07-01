@@ -304,6 +304,7 @@ SIGAR_DECLARE(int) sigar_proc_stat_get(sigar_t *sigar,
 
     for (i=0; i<pids->number; i++) {
         sigar_proc_state_t state;
+        memset(&state, 0, sizeof(state));
 
         status = sigar_proc_state_get(sigar, pids->data[i], &state);
         if (status != SIGAR_OK) {
