@@ -1566,7 +1566,7 @@ static void hwaddr_aix_lookup(sigar_t *sigar, sigar_net_interface_config_t *ifco
     sigar_hwaddr_set_null(ifconfig);
 }
 
-#elif !defined(SIOCGIFHWADDR)
+#elif !defined(SIOCGIFHWADDR) && !defined(HAVE_LIBDLPI_H)
 
 #include <net/if_arp.h>
 
