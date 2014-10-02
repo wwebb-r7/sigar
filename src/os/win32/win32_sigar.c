@@ -169,7 +169,7 @@ sigar_uint64_t sigar_FileTimeToTime(FILETIME *ft)
 static DWORD perfbuf_init(sigar_t *sigar)
 {
     if (!sigar->perfbuf) {
-        sigar->perfbuf = malloc(PERFBUF_SIZE);
+        sigar->perfbuf = calloc(1, PERFBUF_SIZE);
         sigar->perfbuf_size = PERFBUF_SIZE;
     }
 
@@ -551,7 +551,7 @@ int sigar_os_open(sigar_t **sigar_ptr)
     int wmi_status;
     sigar_t *sigar;
 
-    *sigar_ptr = sigar = malloc(sizeof(*sigar));
+    *sigar_ptr = sigar = calloc(1, sizeof(*sigar));
     sigar->machine = ""; /* local machine */
     sigar->using_wide = 0; /*XXX*/
 
@@ -1347,7 +1347,7 @@ sigar_proc_cred_name_get(sigar_t *sigar, sigar_pid_t pid,
     success =
         !GetTokenInformation(token, TokenUser, NULL, 0, &len) &&
         (GetLastError() == ERROR_INSUFFICIENT_BUFFER) &&
-        (user = malloc(len)) &&
+        (user = calloc(1, len)) &&
         GetTokenInformation(token, TokenUser, user, len, &len);
 
     if (success) {
@@ -1370,7 +1370,7 @@ sigar_proc_cred_name_get(sigar_t *sigar, sigar_pid_t pid,
     success =
         !GetTokenInformation(token, TokenPrimaryGroup, NULL, 0, &len) &&
         (GetLastError() == ERROR_INSUFFICIENT_BUFFER) &&
-        (group = malloc(len)) &&
+        (group = calloc(1, len)) &&
         GetTokenInformation(token, TokenPrimaryGroup, group, len, &len);
 
     if (success) {
@@ -2399,7 +2399,7 @@ static int sigar_get_adapter_info(sigar_t *sigar,
             entry = sigar_cache_get(sigar->netif_adapters,
                                     info->Index);
             if (!entry->value) {
-                entry->value = malloc(sizeof(*info));
+                entry->value = calloc(1, sizeof(*info));
             }
             memcpy(entry->value, info, sizeof(*info));
             if (info->Index == index) {
@@ -2539,7 +2539,7 @@ static int sigar_get_netif_ipaddr(sigar_t *sigar,
             entry = sigar_cache_get(sigar->netif_addr_rows,
                                     row->dwIndex);
             if (!entry->value) {
-                entry->value = malloc(sizeof(*row));
+                entry->value = calloc(1, sizeof(*row));
             }
             memcpy(entry->value, row, sizeof(*row));
 
@@ -2579,7 +2579,7 @@ SIGAR_DECLARE(int) sigar_net_info_get(sigar_t *sigar,
         return rc;
     }
 
-    info = malloc(len);
+    info = calloc(1, len);
     rc = sigar_GetNetworkParams(info, &len);
     if (rc != NO_ERROR) {
         free(info);
@@ -2642,7 +2642,7 @@ SIGAR_DECLARE(int) sigar_net_route_list_get(sigar_t *sigar,
         return GetLastError();
     }
 
-    buffer = malloc(bufsize);
+    buffer = calloc(1, bufsize);
     rc = sigar_GetIpForwardTable(buffer, &bufsize, FALSE);
     if (rc != NO_ERROR) {
         free(buffer);
@@ -2839,7 +2839,7 @@ sigar_net_interface_list_get(sigar_t *sigar,
         iflist->number = 0;
         iflist->size = ift->dwNumEntries;
         iflist->data =
-            malloc(sizeof(*(iflist->data)) * iflist->size);
+            calloc(sizeof(*(iflist->data)), iflist->size);
     }
 
     for (i=0; i<ift->dwNumEntries; i++) {
@@ -2892,7 +2892,7 @@ sigar_net_interface_list_get(sigar_t *sigar,
         key = netif_hash(name);
         entry = sigar_cache_get(sigar->netif_mib_rows, key);
         if (!entry->value) {
-            entry->value = malloc(sizeof(*ifr));
+            entry->value = calloc(1, sizeof(*ifr));
         }
         memcpy(entry->value, ifr, sizeof(*ifr));
 
@@ -3096,7 +3096,7 @@ static int net_conn_get_tcp(sigar_net_connection_walker_t *walker)
     if (rc != ERROR_INSUFFICIENT_BUFFER) {
         return GetLastError();
     }
-    tcp = malloc(size);
+    tcp = calloc(1, size);
     rc = sigar_GetTcpTable(tcp, &size, FALSE);
     if (rc) {
         free(tcp);
@@ -3212,7 +3212,7 @@ static int net_conn_get_udp(sigar_net_connection_walker_t *walker)
     if (rc != ERROR_INSUFFICIENT_BUFFER) {
         return GetLastError();
     }
-    udp = malloc(size);
+    udp = calloc(1, size);
     rc = sigar_GetUdpTable(udp, &size, FALSE);
     if (rc) {
         free(udp);
@@ -3431,7 +3431,7 @@ SIGAR_DECLARE(int) sigar_arp_list_get(sigar_t *sigar,
     if (rc != ERROR_INSUFFICIENT_BUFFER) {
         return GetLastError();
     }
-    ipnet = malloc(size);
+    ipnet = calloc(1, size);
     rc = sigar_GetIpNetTable(ipnet, &size, FALSE);
     if (rc) {
         free(ipnet);
@@ -4069,7 +4069,7 @@ int sigar_file_version_get(sigar_file_version_t *version,
     if (len == 0) {
         return !SIGAR_OK;
     }
-    data = malloc(len);
+    data = calloc(1, len);
 
     if (GetFileVersionInfo(name, handle, len, data)) {
         if (VerQueryValue(data, "\\", (void **)&info, &len)) {
