@@ -1592,6 +1592,13 @@ static int get_cpu_info(sigar_t *sigar, sigar_cpu_info_t *info,
 
     int found = 0;
 
+	/*
+	 * Make sure we don't put trash in here if we can't find
+	 * the field keywords.
+	 */
+
+	memset(info, 0, sizeof(*info));
+
     /* UML vm wont have "cpu MHz" or "cache size" fields */
     info->mhz        = 0;
     info->cache_size = 0;
