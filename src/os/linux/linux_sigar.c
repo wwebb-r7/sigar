@@ -1345,6 +1345,7 @@ static int get_iostat_proc_dstat(sigar_t *sigar,
                 disk->wtime = wuse;
                 disk->time = use;
                 disk->qtime = aveq;
+                disk->ios = running;
             }
             else if (num == 4) {
                 wio = rsect;

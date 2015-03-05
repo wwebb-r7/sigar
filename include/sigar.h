@@ -535,6 +535,7 @@ typedef struct {
     sigar_uint64_t qtime;
     sigar_uint64_t time;
     sigar_uint64_t snaptime;
+    sigar_uint64_t ios;
     double service_time;
     double queue;
 } sigar_disk_usage_t;
