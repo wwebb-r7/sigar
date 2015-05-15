@@ -836,7 +836,7 @@ int sigar_cpu_mhz_from_model(char *model)
     return mhz;
 }
 
-#if !defined(WIN32) && !defined(NETWARE)
+#ifdef HAVE_RPC_RPC_H
 #include <netdb.h>
 #include <rpc/rpc.h>
 #include <rpc/pmap_prot.h>
