@@ -84,11 +84,11 @@ int sigar_inet_ntoa(sigar_t *sigar,
 struct hostent *sigar_gethostbyname(const char *name,
                                     sigar_hostent_t *data);
 
-SIGAR_INLINE char *sigar_skip_line(char *buffer, int buflen);
+char *sigar_skip_line(char *buffer, int buflen);
 
-SIGAR_INLINE char *sigar_skip_token(char *p);
+char *sigar_skip_token(char *p);
 
-SIGAR_INLINE char *sigar_skip_multiple_token(char *p, int count);
+char *sigar_skip_multiple_token(char *p, int count);
 
 int sigar_skip_file_lines(FILE *fp, int count);
 
