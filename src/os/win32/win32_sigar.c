@@ -346,8 +346,8 @@ static sigar_iphlpapi_t sigar_iphlpapi = {
     { "GetNumberOfInterfaces", NULL },
     { "GetTcpTable", NULL },
     { "GetUdpTable", NULL },
-    { "AllocateAndGetTcpExTableFromStack", NULL },
-    { "AllocateAndGetUdpExTableFromStack", NULL },
+    { "GetExtendedTcpTable", NULL },
+    { "GetExtendedUdpTable", NULL },
     { "GetTcpStatistics", NULL },
     { "GetNetworkParams", NULL },
     { "GetAdaptersInfo", NULL },
@@ -430,7 +430,6 @@ static int sigar_dllmod_init(sigar_t *sigar,
     if (module->handle) {
         return SIGAR_OK;
     }
-
     module->handle = LoadLibrary(module->name);
     if (!(success = (module->handle ? TRUE : FALSE))) {
         rc = GetLastError();
@@ -1781,6 +1780,7 @@ SIGAR_DECLARE(int) sigar_proc_exe_get(sigar_t *sigar, sigar_pid_t pid,
     }
 
     status = sigar_proc_exe_peb_get(sigar, proc, procexe);
+
 #ifdef MSVC
     if (procexe->name[0] == '\0') {
         /* likely we are 32-bit, pid process is 64-bit */
@@ -3194,7 +3194,6 @@ static int net_conn_get_udp(sigar_net_connection_walker_t *walker)
      * functionality anyway
      */
     return SIGAR_ENOTIMPL;
-
 #if 0
     sigar_t *sigar = walker->sigar;
     int flags = walker->flags;
@@ -3349,25 +3348,33 @@ SIGAR_DECLARE(int) sigar_proc_port_get(sigar_t *sigar,
                                        unsigned long port,
                                        sigar_pid_t *pid)
 {
-    DWORD rc, i;
+    DWORD rc, i, size = 0;
+    *pid = 0;
 
     DLLMOD_INIT(iphlpapi, FALSE);
 
     if (protocol == SIGAR_NETCONN_TCP) {
-        PMIB_TCPEXTABLE tcp;
+        MIB_TCPTABLE_OWNER_PID *tcp = NULL;
 
         if (!sigar_GetTcpExTable) {
             return SIGAR_ENOTIMPL;
         }
+        rc = sigar_GetTcpExTable(NULL, &size, FALSE, AF_INET, TCP_TABLE_OWNER_PID_LISTENER, 0);
 
-        rc = sigar_GetTcpExTable(&tcp, FALSE, GetProcessHeap(),
-                                 2, 2);
-
-        if (rc) {
+        if (rc != ERROR_INSUFFICIENT_BUFFER) {
             return GetLastError();
         }
 
-        for (i=0; i<tcp->dwNumEntries; i++) {
+        tcp  = (MIB_TCPTABLE_OWNER_PID *)malloc(size);
+
+        rc = sigar_GetTcpExTable(tcp, &size, FALSE, AF_INET, TCP_TABLE_OWNER_PID_LISTENER, 0);
+
+        if (rc != NO_ERROR) {
+            free(tcp);
+            return GetLastError();
+        }
+
+        for (i = 0; i < tcp->dwNumEntries; i++) {
             if (tcp->table[i].dwState != MIB_TCP_STATE_LISTEN) {
                 continue;
             }
@@ -3376,40 +3383,45 @@ SIGAR_DECLARE(int) sigar_proc_port_get(sigar_t *sigar,
                 continue;
             }
 
-            *pid = tcp->table[i].dwProcessId;
-
-            return SIGAR_OK;
+            *pid = tcp->table[i].dwOwningPid;
+            free(tcp);
+            break;
         }
-    }
-    else if (protocol == SIGAR_NETCONN_UDP) {
-        PMIB_UDPEXTABLE udp;
+    } else if (protocol == SIGAR_NETCONN_UDP) {
+
+        MIB_UDPTABLE_OWNER_PID *udp = NULL;
 
         if (!sigar_GetUdpExTable) {
             return SIGAR_ENOTIMPL;
         }
+        rc = sigar_GetUdpExTable(NULL, &size, FALSE, AF_INET, UDP_TABLE_OWNER_PID, 0);
 
-        rc = sigar_GetUdpExTable(&udp, FALSE, GetProcessHeap(),
-                                 2, 2);
-
-        if (rc) {
+        if (rc != ERROR_INSUFFICIENT_BUFFER) {
             return GetLastError();
         }
 
-        for (i=0; i<udp->dwNumEntries; i++) {
+        udp = (MIB_UDPTABLE_OWNER_PID *)malloc(size);
+
+        rc = sigar_GetUdpExTable(udp, &size, FALSE, AF_INET, UDP_TABLE_OWNER_PID, 0);
+
+        if (rc != NO_ERROR) {
+            free(udp);
+            return GetLastError();
+        }
+
+        for (i = 0; i < udp->dwNumEntries; i++) {
             if (htons((WORD)udp->table[i].dwLocalPort) != port) {
                 continue;
             }
-
-            *pid = udp->table[i].dwProcessId;
-
-            return SIGAR_OK;
+            *pid = udp->table[i].dwOwningPid;
+            free (udp);
+            break;
         }
-    }
-    else {
+    } else {
         return SIGAR_ENOTIMPL;
     }
 
-    return ENOENT;
+    return SIGAR_OK;
 }
 
 #define sigar_GetIpNetTable \

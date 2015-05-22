@@ -407,17 +407,19 @@ typedef DWORD (CALLBACK *iphlpapi_get_udp_table)(PMIB_UDPTABLE,
                                                  PDWORD,
                                                  BOOL);
 
-typedef DWORD (CALLBACK *iphlpapi_get_tcpx_table)(PMIB_TCPEXTABLE *,
+typedef DWORD (CALLBACK *iphlpapi_get_tcpx_table)(PVOID,
+                                                  PDWORD,
                                                   BOOL,
-                                                  HANDLE,
-                                                  DWORD,
-                                                  DWORD);
+                                                  ULONG,
+                                                  TCP_TABLE_CLASS,
+                                                  ULONG);
 
-typedef DWORD (CALLBACK *iphlpapi_get_udpx_table)(PMIB_UDPEXTABLE *,
+typedef DWORD (CALLBACK *iphlpapi_get_udpx_table)(PVOID,
+                                                  PDWORD,
                                                   BOOL,
-                                                  HANDLE,
-                                                  DWORD,
-                                                  DWORD);
+                                                  ULONG,
+                                                  UDP_TABLE_CLASS,
+                                                  ULONG);
 
 typedef DWORD (CALLBACK *iphlpapi_get_tcp_stats)(PMIB_TCPSTATS);
 
