@@ -1773,24 +1773,14 @@ SIGAR_DECLARE(int) sigar_proc_exe_get(sigar_t *sigar, sigar_pid_t pid,
                                       sigar_proc_exe_t *procexe)
 {
     int status = SIGAR_OK;
-    HANDLE proc = open_process(pid);
 
-    if (!proc) {
-        return GetLastError();
+    memset(procexe, 0, sizeof(*procexe));
+
+    status = sigar_proc_exe_wmi_get(sigar, pid, procexe);
+    if (status == ERROR_NOT_FOUND) {
+        status = SIGAR_NO_SUCH_PROCESS;
     }
 
-    status = sigar_proc_exe_peb_get(sigar, proc, procexe);
-
-#ifdef MSVC
-    if (procexe->name[0] == '\0') {
-        /* likely we are 32-bit, pid process is 64-bit */
-        /* procexe->cwd[0] = XXX where else can we try? */
-        status = sigar_proc_exe_wmi_get(sigar, pid, procexe);
-        if (status == ERROR_NOT_FOUND) {
-            status = SIGAR_NO_SUCH_PROCESS;
-        }
-    }
-#endif
     if (procexe->cwd[0] != '\0') {
         /* strip trailing '\' */
         int len = strlen(procexe->cwd);
@@ -1811,8 +1801,6 @@ SIGAR_DECLARE(int) sigar_proc_exe_get(sigar_t *sigar, sigar_pid_t pid,
         /* uppercase driver letter */
         procexe->name[0] = toupper(procexe->name[0]);
     }
-
-    CloseHandle(proc);
 
     return status;
 }

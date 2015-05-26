@@ -104,7 +104,13 @@ sigar_wmi_handle_t * wmi_handle_open(int *error)
 
 	hres = CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_CONNECT,
                                     RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE, 0);
-	if (FAILED(hres)) {
+
+	/*
+	* If RPC_E_TOO_LATE then we have already been called.  This happens in the case of
+	* multiple sigar instances since this should only be called once per application.
+	*/
+
+	if (FAILED(hres) && hres != RPC_E_TOO_LATE) {
 		goto err;
 	}
 
@@ -138,7 +144,7 @@ HRESULT wmi_get_proc_string_property(sigar_t *sigar, DWORD pid, TCHAR * name, TC
 	wchar_t query[56];
 	wsprintf(query, L"Win32_Process.Handle=%d", pid);
 
-        result = sigar->wmi_handle->services->GetObject(query, 0, 0, &obj, 0);
+	result = sigar->wmi_handle->services->GetObject(query, 0, 0, &obj, 0);
 
 	if (FAILED(result)) {
 		return result;
