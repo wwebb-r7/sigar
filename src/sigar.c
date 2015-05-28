@@ -869,6 +869,29 @@ sigar_net_connection_list_get(sigar_t *sigar,
 
     return status;
 }
+
+SIGAR_DECLARE(int)
+sigar_net_connection_listeners_get(sigar_t *sigar,
+                              sigar_net_connection_list_t *connlist)
+{
+    int status;
+    sigar_net_connection_walker_t walker;
+
+    sigar_net_connection_list_create(connlist);
+
+    walker.sigar = sigar;
+    walker.flags = SIGAR_NETCONN_UDP | SIGAR_NETCONN_TCP | SIGAR_NETCONN_SERVER;
+    walker.data = connlist;
+    walker.add_connection = net_connection_list_walker;
+
+    status = sigar_net_listeners_get(&walker);
+
+    if (status != SIGAR_OK) {
+        sigar_net_connection_list_destroy(sigar, connlist);
+    }
+
+    return status;
+}
 #endif
 
 static void sigar_net_listen_address_add(sigar_t *sigar,

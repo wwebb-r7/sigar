@@ -3194,6 +3194,32 @@ int sigar_net_connection_walk(sigar_net_connection_walker_t *walker)
 }
 
 SIGAR_DECLARE(int)
+sigar_net_listeners_get(sigar_net_connection_walker_t *walker)
+{
+	int i, status;
+
+	status = sigar_net_connection_walk(walker);
+
+	if (status != SIGAR_OK) {
+		return status;
+	}
+
+	sigar_net_connection_list_t *list = walker->data;
+
+	sigar_pid_t pid;
+	for (i = 0; i < list->number; i++) {
+		status = sigar_proc_port_get(walker->sigar, walker->flags,
+			list->data[i].local_port, &pid);
+
+		if (status == SIGAR_OK) {
+			list->data[i].pid = pid;
+		}
+	}
+
+	return SIGAR_OK;
+}
+
+SIGAR_DECLARE(int)
 sigar_tcp_get(sigar_t *sigar,
               sigar_tcp_t *tcp)
 {

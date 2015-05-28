@@ -762,6 +762,7 @@ typedef struct {
     int state;
     unsigned long send_queue;
     unsigned long receive_queue;
+    sigar_pid_t pid;
 } sigar_net_connection_t;
 
 typedef struct {
@@ -792,6 +793,12 @@ struct sigar_net_connection_walker_t {
 
 SIGAR_DECLARE(int)
 sigar_net_connection_walk(sigar_net_connection_walker_t *walker);
+
+SIGAR_DECLARE(int)
+sigar_net_listeners_get(sigar_net_connection_walker_t *walker);
+
+SIGAR_DECLARE(int)
+sigar_net_connection_listeners_get(sigar_t *sigar, sigar_net_connection_list_t *connlist);
 
 typedef struct {
     int tcp_states[SIGAR_TCP_UNKNOWN];
