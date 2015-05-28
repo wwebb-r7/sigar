@@ -3366,7 +3366,6 @@ SIGAR_DECLARE(int) sigar_proc_port_get(sigar_t *sigar,
             if (tcp->table[i].dwState != MIB_TCP_STATE_LISTEN) {
                 continue;
             }
-
             if (htons((WORD)tcp->table[i].dwLocalPort) != port) {
                 continue;
             }
@@ -3410,6 +3409,183 @@ SIGAR_DECLARE(int) sigar_proc_port_get(sigar_t *sigar,
     }
 
     return SIGAR_OK;
+}
+
+SIGAR_DECLARE(int) sigar_net_listeners_get(sigar_net_connection_walker_t *walker)
+{
+	DWORD rc, i, size = 0;
+
+	sigar_t *sigar = walker->sigar;
+
+	DLLMOD_INIT(iphlpapi, FALSE);
+
+	sigar_net_connection_t conn;
+
+	MIB_TCPTABLE_OWNER_PID *tcp = NULL;
+	MIB_TCP6TABLE_OWNER_PID *tcp6 = NULL;
+	MIB_UDPTABLE_OWNER_PID *udp = NULL;
+	MIB_UDP6TABLE_OWNER_PID *udp6 = NULL;
+
+	if (!sigar_GetTcpExTable || !sigar_GetUdpExTable) {
+		return SIGAR_ENOTIMPL;
+	}
+
+	rc = sigar_GetTcpExTable(NULL, &size, FALSE, AF_INET, TCP_TABLE_OWNER_PID_LISTENER, 0);
+
+	if (rc != ERROR_INSUFFICIENT_BUFFER) {
+		return GetLastError();
+	}
+
+	tcp  = (MIB_TCPTABLE_OWNER_PID *)malloc(size);
+
+	rc = sigar_GetTcpExTable(tcp, &size, FALSE, AF_INET, TCP_TABLE_OWNER_PID_LISTENER, 0);
+
+	if (rc != NO_ERROR) {
+		free(tcp);
+		return GetLastError();
+	}
+
+	for (i = 0; i < tcp->dwNumEntries; i++) {
+		if (tcp->table[i].dwState != MIB_TCP_STATE_LISTEN) {
+			continue;
+		}
+
+		conn.pid = tcp->table[i].dwOwningPid;
+		conn.local_port  = htons((WORD)tcp->table[i].dwLocalPort);
+		conn.remote_port = 0;
+
+		conn.type = SIGAR_NETCONN_TCP;
+
+		sigar_net_address_set(conn.local_address,
+			tcp->table[i].dwLocalAddr);
+
+		sigar_net_address_set(conn.remote_address, 0);
+
+		conn.send_queue = conn.receive_queue = SIGAR_FIELD_NOTIMPL;
+
+		if (walker->add_connection(walker, &conn) != SIGAR_OK) {
+			break;
+		}
+	}
+	free(tcp);
+
+	size = 0;
+
+	rc = sigar_GetTcpExTable(NULL, &size, FALSE, AF_INET6, TCP_TABLE_OWNER_PID_LISTENER, 0);
+
+	if (rc != ERROR_INSUFFICIENT_BUFFER) {
+		return GetLastError();
+	}
+
+	tcp6 = (MIB_TCP6TABLE_OWNER_PID *)malloc(size);
+
+	rc = sigar_GetTcpExTable(tcp6, &size, FALSE, AF_INET6, TCP_TABLE_OWNER_PID_LISTENER, 0);
+
+	if (rc != NO_ERROR) {
+		free(tcp6);
+		return GetLastError();
+	}
+
+	for (i = 0; i < tcp6->dwNumEntries; i++) {
+		if (tcp6->table[i].dwState != MIB_TCP_STATE_LISTEN) {
+			continue;
+		}
+
+		conn.pid = tcp6->table[i].dwOwningPid;
+		conn.local_port  = htons((WORD)tcp6->table[i].dwLocalPort);
+		conn.remote_port = 0;
+
+		conn.type = SIGAR_NETCONN_TCP;
+
+		sigar_net_address6_set(conn.local_address,
+			tcp6->table[i].ucLocalAddr);
+
+		memset(&conn.remote_address.addr, 0, sizeof(conn.remote_address.addr));
+
+		conn.send_queue = conn.receive_queue = SIGAR_FIELD_NOTIMPL;
+
+		if (walker->add_connection(walker, &conn) != SIGAR_OK) {
+			break;
+		}
+	}
+	free(tcp6);
+
+	size = 0;
+	rc = sigar_GetUdpExTable(NULL, &size, FALSE, AF_INET, UDP_TABLE_OWNER_PID, 0);
+
+	if (rc != ERROR_INSUFFICIENT_BUFFER) {
+		return GetLastError();
+	}
+
+	udp  = (MIB_UDPTABLE_OWNER_PID *)malloc(size);
+
+	rc = sigar_GetUdpExTable(udp, &size, FALSE, AF_INET, UDP_TABLE_OWNER_PID, 0);
+
+	if (rc != NO_ERROR) {
+		free(udp);
+		return GetLastError();
+	}
+
+	for (i = 0; i < udp->dwNumEntries; i++) {
+
+		conn.pid = udp->table[i].dwOwningPid;
+		conn.local_port  = htons((WORD)udp->table[i].dwLocalPort);
+		conn.remote_port = 0;
+
+		conn.type = SIGAR_NETCONN_UDP;
+
+		sigar_net_address_set(conn.local_address,
+			udp->table[i].dwLocalAddr);
+
+		sigar_net_address_set(conn.remote_address, 0);
+
+		conn.send_queue = conn.receive_queue = SIGAR_FIELD_NOTIMPL;
+
+		if (walker->add_connection(walker, &conn) != SIGAR_OK) {
+			break;
+		}
+	}
+	free(udp);
+
+	size = 0;
+
+	rc = sigar_GetUdpExTable(NULL, &size, FALSE, AF_INET6, UDP_TABLE_OWNER_PID, 0);
+
+	if (rc != ERROR_INSUFFICIENT_BUFFER) {
+		return GetLastError();
+	}
+
+	udp6 = (MIB_UDP6TABLE_OWNER_PID *)malloc(size);
+
+	rc = sigar_GetUdpExTable(udp6, &size, FALSE, AF_INET6, UDP_TABLE_OWNER_PID, 0);
+
+	if (rc != NO_ERROR) {
+		free(udp6);
+		return GetLastError();
+	}
+
+	for (i = 0; i < udp6->dwNumEntries; i++) {
+
+		conn.pid = udp6->table[i].dwOwningPid;
+		conn.local_port  = htons((WORD)udp6->table[i].dwLocalPort);
+		conn.remote_port = 0;
+
+		conn.type = SIGAR_NETCONN_UDP;
+
+		sigar_net_address6_set(conn.local_address,
+			udp6->table[i].ucLocalAddr);
+
+		memset(&conn.remote_address.addr, 0, sizeof(conn.remote_address.addr));
+
+		conn.send_queue = conn.receive_queue = SIGAR_FIELD_NOTIMPL;
+
+		if (walker->add_connection(walker, &conn) != SIGAR_OK) {
+			break;
+		}
+	}
+	free(udp6);
+
+	return SIGAR_OK;
 }
 
 #define sigar_GetIpNetTable \

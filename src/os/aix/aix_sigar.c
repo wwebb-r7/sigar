@@ -18,7 +18,7 @@
 
 /* pull in time.h before resource.h does w/ _KERNEL */
 #include <sys/time.h>
-#define _KERNEL 1 
+#define _KERNEL 1
 #include <sys/file.h>     /* for struct file */
 #include <sys/resource.h> /* for rlimit32 in 64-bit mode */
 #undef  _KERNEL
@@ -124,7 +124,7 @@ static int get_koffsets(sigar_t *sigar)
     for (i=0; i<KOFFSET_MAX; i++) {
         sigar->koffsets[i] = klist[i].n_value;
     }
-    
+
     return SIGAR_OK;
 }
 
@@ -261,12 +261,12 @@ int sigar_mem_get(sigar_t *sigar, sigar_mem_t *mem)
     }
     else {
         return errno;
-    }            
+    }
 
     mem->used = mem->total - mem->free;
     mem->actual_used = mem->used - kern;
     mem->actual_free = mem->free + kern;
-    
+
     sigar_mem_calc_ram(sigar, mem);
 
     return SIGAR_OK;
@@ -358,7 +358,7 @@ static int swaps_get(swaps_t *swaps)
     return 0;
 }
 
-/* 
+/*
  * documented in aix tech ref,
  * but this prototype is not in any friggin header file.
  * struct pginfo is in sys/vminfo.h
@@ -791,7 +791,7 @@ int sigar_proc_cred_get(sigar_t *sigar, sigar_pid_t pid,
     proccred->uid  = pinfo->pi_cred.cr_ruid;
     proccred->euid = pinfo->pi_cred.cr_uid;
     if (proccred->uid == -1) {
-        /* 
+        /*
          * aix 5.2 has a process named 'jfsz'
          * where uid is '-1', getpwuid returns EPERM
          */
@@ -840,7 +840,7 @@ int sigar_proc_state_get(sigar_t *sigar, sigar_pid_t pid,
     else {
         procstate->processor = SIGAR_FIELD_NOTIMPL;
     }
-    
+
     SIGAR_SSTRCPY(procstate->name, pinfo->pi_comm);
     procstate->ppid = pinfo->pi_ppid;
     procstate->nice = pinfo->pi_nice;
@@ -894,7 +894,7 @@ int sigar_os_proc_args_get(sigar_t *sigar, sigar_pid_t pid,
         memcpy(arg, ptr, alen);
 
         procargs->data[procargs->number++] = arg;
-            
+
         ptr += alen;
     }
 
@@ -1034,7 +1034,7 @@ static int sigar_proc_modules_local_get(sigar_t *sigar,
     do {
         char *name = info->ldinfo_filename;
 
-        status = 
+        status =
             procmods->module_getter(procmods->data, name, strlen(name));
 
         if (status != SIGAR_OK) {
@@ -1042,7 +1042,7 @@ static int sigar_proc_modules_local_get(sigar_t *sigar,
             free(buffer);
             return status;
         }
-        
+
         offset = info->ldinfo_next;
         info = (struct ld_info *)((char*)info + offset);
     } while(offset);
@@ -1086,7 +1086,7 @@ int sigar_thread_cpu_get(sigar_t *sigar,
         }
     }
 
-    retval = 
+    retval =
         sigar_thread_rusage(&usage,
                             PTHRDSINFO_RUSAGE_COLLECT);
     if (retval != 0) {
@@ -1176,7 +1176,7 @@ int sigar_file_system_list_get(sigar_t *sigar,
 
         SIGAR_SSTRCPY(fsp->dir_name, vmt2dataptr(ent, VMT_STUB));
         SIGAR_SSTRCPY(fsp->options, vmt2dataptr(ent, VMT_ARGS));
-        
+
         devname = vmt2dataptr(ent, VMT_OBJECT);
 
         if (fsp->type == SIGAR_FSTYPE_NETWORK) {
@@ -1330,7 +1330,7 @@ int sigar_file_system_usage_get(sigar_t *sigar,
     sigar_cache_entry_t *ent;
     struct stat sb;
     int status;
-    
+
     status = sigar_statvfs(sigar, dirname, fsusage);
 
     if (status != SIGAR_OK) {
@@ -1499,7 +1499,7 @@ int sigar_cpu_info_list_get(sigar_t *sigar,
 
         SIGAR_CPU_INFO_LIST_GROW(cpu_infos);
 
-        info = &cpu_infos->data[cpu_infos->number++];        
+        info = &cpu_infos->data[cpu_infos->number++];
 
         info->total_cores = ncpu;
         info->cores_per_socket = 1; /*XXX*/
@@ -1813,6 +1813,32 @@ int sigar_net_connection_walk(sigar_net_connection_walker_t *walker)
 }
 
 SIGAR_DECLARE(int)
+	sigar_net_listeners_get(sigar_net_connection_walker_t *walker)
+{
+	int i, status;
+
+	status = sigar_net_connection_walk(walker);
+
+	if (status != SIGAR_OK) {
+		return status;
+	}
+
+	sigar_net_connection_list_t *list = walker->data;
+
+	sigar_pid_t pid;
+	for (i = 0; i < list->number; i++) {
+		status = sigar_proc_port_get(walker->sigar, walker->flags,
+			list->data[i].local_port, &pid);
+
+		if (status == SIGAR_OK) {
+			list->data[i].pid = pid;
+		}
+	}
+
+	return SIGAR_OK;
+}
+
+SIGAR_DECLARE(int)
 sigar_tcp_get(sigar_t *sigar,
               sigar_tcp_t *tcp)
 {
@@ -1823,7 +1849,7 @@ sigar_tcp_get(sigar_t *sigar,
 
     if (perfstat_protocol(&id, &proto, sizeof(proto), 1) != 1) {
         return ENOENT;
-    }    
+    }
 
     tcp->active_opens = proto.u.tcp.initiated;
     tcp->passive_opens = proto.u.tcp.accepted;
@@ -1867,7 +1893,7 @@ int sigar_nfs_client_v2_get(sigar_t *sigar,
 
     if (perfstat_protocol(&id, &proto, sizeof(proto), 1) != 1) {
         return ENOENT;
-    }    
+    }
 
     NFS_V2_STAT_SET(client);
 
@@ -1884,7 +1910,7 @@ int sigar_nfs_server_v2_get(sigar_t *sigar,
 
     if (perfstat_protocol(&id, &proto, sizeof(proto), 1) != 1) {
         return ENOENT;
-    }    
+    }
 
     NFS_V2_STAT_SET(server);
 
@@ -1925,7 +1951,7 @@ int sigar_nfs_client_v3_get(sigar_t *sigar,
 
     if (perfstat_protocol(&id, &proto, sizeof(proto), 1) != 1) {
         return ENOENT;
-    }    
+    }
 
     NFS_V3_STAT_SET(client);
 
@@ -1942,7 +1968,7 @@ int sigar_nfs_server_v3_get(sigar_t *sigar,
 
     if (perfstat_protocol(&id, &proto, sizeof(proto), 1) != 1) {
         return ENOENT;
-    }    
+    }
 
     NFS_V3_STAT_SET(server);
 
@@ -2033,7 +2059,7 @@ int sigar_proc_port_get(sigar_t *sigar, int protocol,
     struct fdsinfo finfo;
     pid_t pid = 0;
     int type;
-    
+
     switch (protocol) {
         case SIGAR_NETCONN_TCP:
             type = IPPROTO_TCP;
@@ -2044,7 +2070,7 @@ int sigar_proc_port_get(sigar_t *sigar, int protocol,
         default:
           return SIGAR_ENOTIMPL;
     }
-    
+
     for (;;) {
         int fd, status;
         int num = getprocs(&pinfo, sizeof(pinfo),
@@ -2066,11 +2092,11 @@ int sigar_proc_port_get(sigar_t *sigar, int protocol,
             struct domain domain;
             struct inpcb inpcb;
             long ptr;
-            
+
             if (!(ptr = (long)finfo.pi_ufd[fd].fp)) {
                 continue;
             }
-            
+
             status = kread(sigar, &file, sizeof(file), ptr);
             if (status != SIGAR_OK) {
                 continue;
@@ -2079,11 +2105,11 @@ int sigar_proc_port_get(sigar_t *sigar, int protocol,
             if (file.f_type != DTYPE_SOCKET) {
                 continue;
             }
-            
+
             if (!(sockp = (struct socket *)file.f_data)) {
                 continue;
             }
-            
+
             status = kread(sigar, &socket, sizeof(socket), (long)sockp);
             if (status != SIGAR_OK) {
                 continue;
@@ -2092,7 +2118,7 @@ int sigar_proc_port_get(sigar_t *sigar, int protocol,
             if (!(ptr = (long)socket.so_proto)) {
                 continue;
             }
-            
+
             status = kread(sigar, &protosw, sizeof(protosw), ptr);
             if (status != SIGAR_OK) {
                 continue;
@@ -2101,11 +2127,11 @@ int sigar_proc_port_get(sigar_t *sigar, int protocol,
             if (protosw.pr_protocol != type) {
                 continue;
             }
-            
+
             if (!(ptr = (long)protosw.pr_domain)) {
                 continue;
             }
-            
+
             status = kread(sigar, &domain, sizeof(domain), ptr);
             if (status != SIGAR_OK) {
                 continue;
@@ -2116,11 +2142,11 @@ int sigar_proc_port_get(sigar_t *sigar, int protocol,
             {
                 continue;
             }
-            
+
             if (!(ptr = (long)socket.so_pcb)) {
                 continue;
             }
-            
+
             status = kread(sigar, &inpcb, sizeof(inpcb), ptr);
             if (status != SIGAR_OK) {
                 continue;
@@ -2133,7 +2159,7 @@ int sigar_proc_port_get(sigar_t *sigar, int protocol,
             if (inpcb.inp_lport != port) {
                 continue;
             }
-            
+
             *pidp = pinfo.pi_pid;
 
             return SIGAR_OK;

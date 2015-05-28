@@ -2263,6 +2263,34 @@ int sigar_net_interface_ipv6_config_get(sigar_t *sigar, const char *name,
     return status;
 }
 
+SIGAR_DECLARE(int)
+sigar_net_connection_listeners_get(sigar_t *sigar,
+		sigar_net_connection_list_t *connlist)
+{
+
+    int i, status;
+
+    status = sigar_net_connection_list_get(sigar, connlist,
+			SIGAR_NETCONN_UDP | SIGAR_NETCONN_TCP | SIGAR_NETCONN_SERVER);
+
+    if (status != SIGAR_OK) {
+        return status;
+    }
+
+    sigar_pid_t pid;
+
+    for (i = 0; i < connlist->number; i++) {
+        status = sigar_proc_port_get(sigar, SIGAR_NETCONN_TCP | SIGAR_NETCONN_UDP,
+            connlist->data[i].local_port, &pid);
+
+        if (status == SIGAR_OK) {
+            connlist->data[i].pid = pid;
+        }
+    }
+
+    return SIGAR_OK;
+}
+
 #define SNMP_TCP_PREFIX "Tcp: "
 
 SIGAR_DECLARE(int)
