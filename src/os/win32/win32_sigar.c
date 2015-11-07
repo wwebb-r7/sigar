@@ -4300,3 +4300,8 @@ int sigar_file_version_get(sigar_file_version_t *version,
     free(data);
     return status;
 }
+
+int sigar_os_is_in_container(sigar_t *sigar)
+{
+    return 0;
+}
