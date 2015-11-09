@@ -1049,6 +1049,17 @@ sigar_rma_get_average(sigar_rma_stat_t * rma,
                       sigar_int64_t cur_time_sec,
                       int *result);
 
+#define SIGAR_CONTAINER_MODE_OFF    0 // Force container mode off.
+#define SIGAR_CONTAINER_MODE_ON     1 // Force container mode on.
+#define SIGAR_CONTAINER_MODE_DECIDE 2 // Let libsigar decide based on OS logic.
+
+SIGAR_DECLARE(void)
+sigar_set_container_mode(sigar_t *sigar,
+						 int mode);
+
+SIGAR_DECLARE(int)
+sigar_get_container_mode(sigar_t *sigar);
+
 #ifdef __cplusplus
 }
 #endif

@@ -2360,6 +2360,22 @@ SIGAR_DECLARE(int) sigar_fqdn_get(sigar_t *sigar, char *name, int namelen)
     return SIGAR_OK;
 }
 
+SIGAR_DECLARE(void) sigar_set_container_mode(sigar_t *sigar, int mode)
+{
+    if (mode == SIGAR_CONTAINER_MODE_OFF) {
+        sigar->in_container = 0;
+    } else if (mode == SIGAR_CONTAINER_MODE_ON) {
+        sigar->in_container = 1;
+    } else if (mode == SIGAR_CONTAINER_MODE_DECIDE) {
+       nsigar->in_container = sigar_os_is_in_container(sigar);
+    }
+}
+
+SIGAR_DECLARE(int) sigar_get_container_mode(sigar_t *sigar)
+{
+    return sigar->in_container;
+}
+
 #ifndef MAX_STRING_LEN
 #define MAX_STRING_LEN 8192
 #endif

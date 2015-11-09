@@ -3030,3 +3030,8 @@ int sigar_os_sys_info_get(sigar_t *sigar,
 
     return SIGAR_OK;
 }
+
+int sigar_os_is_in_container(sigar_t *sigar)
+{
+    return 0;
+}

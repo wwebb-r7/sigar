@@ -2932,3 +2932,45 @@ int sigar_os_sys_info_get(sigar_t *sigar,
 
     return SIGAR_OK;
 }
+
+/*
+ * Attempt to determine if we are in an container.
+ * We examine the 1/cgroup file and look for container entries.
+ * A non-container entry would look like
+ * 3:cpu:/
+ * whereas runing in a container would be
+ * 3:cpu:/docker/58db180b111f8cbc4c08cb58c162c740c728c398cc54bec4586e38d058a028d6
+ * There are numerous lines that may or may not contain a container name.  If we
+ * hit any non-blank entry then we are in a container.
+ */
+
+int sigar_os_is_in_container(sigar_t *sigar)
+{
+    FILE *fp;
+    char buffer[BUFSIZ], *ptr, *tmp_ptr;
+    int in_container = 0;
+
+    snprintf(buffer, sizeof(buffer), "%s/1/cgroup", PROC_FS_ROOT);
+
+    if (!(fp = fopen(buffer, "r"))) {
+        goto out;
+    }
+
+    while ((ptr = fgets(buffer, sizeof(buffer), fp))) {
+        tmp_ptr = strstr(buffer, ":/");
+        if (!tmp_ptr) {
+            continue;
+        }
+        tmp_ptr += 2;
+        if (isalnum(*tmp_ptr)) {
+            in_container = 1;
+            break;
+        }
+    }
+
+    fclose(fp);
+
+out:
+
+    return in_container;
+}

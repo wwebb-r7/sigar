@@ -50,6 +50,7 @@
 #define SIGAR_T_BASE \
    int cpu_list_cores; \
    int log_level; \
+   int in_container; \
    void *log_data; \
    sigar_log_impl_t log_impl; \
    void *ptql_re_data; \
@@ -176,6 +177,8 @@
 int sigar_os_open(sigar_t **sigar);
 
 int sigar_os_close(sigar_t *sigar);
+
+int sigar_os_is_in_container(sigar_t *sigar);
 
 char *sigar_os_error_string(sigar_t *sigar, int err);
 
