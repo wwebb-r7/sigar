@@ -2367,7 +2367,7 @@ SIGAR_DECLARE(void) sigar_set_container_mode(sigar_t *sigar, int mode)
     } else if (mode == SIGAR_CONTAINER_MODE_ON) {
         sigar->in_container = 1;
     } else if (mode == SIGAR_CONTAINER_MODE_DECIDE) {
-       nsigar->in_container = sigar_os_is_in_container(sigar);
+        sigar->in_container = sigar_os_is_in_container(sigar);
     }
 }
 
