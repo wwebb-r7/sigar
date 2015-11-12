@@ -2371,7 +2371,7 @@ SIGAR_DECLARE(void) sigar_set_container_mode(sigar_t *sigar, int mode)
     }
 }
 
-SIGAR_DECLARE(int) sigar_get_container_mode(sigar_t *sigar)
+SIGAR_DECLARE(int) sigar_is_in_container(sigar_t *sigar)
 {
     return sigar->in_container;
 }

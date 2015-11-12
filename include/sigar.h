@@ -1058,7 +1058,7 @@ sigar_set_container_mode(sigar_t *sigar,
 						 int mode);
 
 SIGAR_DECLARE(int)
-sigar_get_container_mode(sigar_t *sigar);
+sigar_is_in_container(sigar_t *sigar);
 
 #ifdef __cplusplus
 }
