@@ -1245,9 +1245,9 @@ int sigar_file_system_list_get(sigar_t *sigar,
                 }
             }
             closedir(ext_dirp);
-    	}
+        }
         closedir(dirp);
-	} else {
+    } else {
 
         if (!(fp = setmntent(MOUNTED, "r"))) {
             return errno;
@@ -1270,7 +1270,7 @@ int sigar_file_system_list_get(sigar_t *sigar,
         }
 
         endmntent(fp);
-	}
+    }
 
     return SIGAR_OK;
 }
