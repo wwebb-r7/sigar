@@ -1200,26 +1200,77 @@ int sigar_file_system_list_get(sigar_t *sigar,
     FILE *fp;
     sigar_file_system_t *fsp;
 
-    if (!(fp = setmntent(MOUNTED, "r"))) {
-        return errno;
-    }
-
     sigar_file_system_list_create(fslist);
 
-    while (getmntent_r(fp, &ent, buf, sizeof(buf))) {
-        SIGAR_FILE_SYSTEM_LIST_GROW(fslist);
+    if (sigar_is_in_container(sigar)) {
+        /*
+        * If we are in a container, we have limited access to some important disk info...
+        * specifically the mount points.  We can look in /proc/fs and find various drives in
+        * /proc/fs/ext[2-4]. eg: /proc/fs/ext4/sda1
+        * We scan those directories and pull out the drive names to create entries similiar to
+        * what getmntent would have shown us.
+        */
+        DIR *dirp = opendir("/proc/fs");
+        struct dirent *dent;
+        while ((dent = readdir(dirp))) {
+            /*
+            * Look for ext filesystems
+            */
+            if (strncmp("ext", dent->d_name, 3)) {
+                continue;
+            }
 
-        fsp = &fslist->data[fslist->number++];
+            // Open the directory, and each d_name becomes a ent.mnt_fsname.
+            snprintf(buf, sizeof(buf), "/proc/fs/%s", dent->d_name);
+            DIR *ext_dirp = opendir(buf);
+            struct dirent *ext_ent;
+            while ((ext_ent = readdir(ext_dirp))) {
 
-        fsp->type = SIGAR_FSTYPE_UNKNOWN; /* unknown, will be set later */
-        SIGAR_SSTRCPY(fsp->dir_name, ent.mnt_dir);
-        SIGAR_SSTRCPY(fsp->dev_name, ent.mnt_fsname);
-        SIGAR_SSTRCPY(fsp->sys_type_name, ent.mnt_type);
-        SIGAR_SSTRCPY(fsp->options, ent.mnt_opts);
-        sigar_fs_type_get(fsp);
-    }
+                /*
+                * Skip . and ..
+                */
+                if (ext_ent->d_name[0] == '.') {
+                    continue;
+                }
 
-    endmntent(fp);
+                SIGAR_FILE_SYSTEM_LIST_GROW(fslist);
+
+                fsp = &fslist->data[fslist->number++];
+
+                fsp->type = SIGAR_FSTYPE_LOCAL_DISK;
+                SIGAR_SSTRCPY(fsp->dir_name, "/");
+                SIGAR_SSTRCPY(fsp->dev_name, ext_ent->d_name);
+                if (SIGAR_LOG_IS_TRACE(sigar)) {
+                    sigar_log_printf(sigar, SIGAR_LOG_TRACE, "sigar_file_system_list_get dir:  %s", ext_ent->d_name);
+                }
+            }
+            closedir(ext_dirp);
+    	}
+        closedir(dirp);
+	} else {
+
+        if (!(fp = setmntent(MOUNTED, "r"))) {
+            return errno;
+        }
+
+        while (getmntent_r(fp, &ent, buf, sizeof(buf))) {
+            SIGAR_FILE_SYSTEM_LIST_GROW(fslist);
+
+            fsp = &fslist->data[fslist->number++];
+
+            fsp->type = SIGAR_FSTYPE_UNKNOWN; /* unknown, will be set later */
+            SIGAR_SSTRCPY(fsp->dir_name, ent.mnt_dir);
+            SIGAR_SSTRCPY(fsp->dev_name, ent.mnt_fsname);
+            SIGAR_SSTRCPY(fsp->sys_type_name, ent.mnt_type);
+            SIGAR_SSTRCPY(fsp->options, ent.mnt_opts);
+            sigar_fs_type_get(fsp);
+            if (SIGAR_LOG_IS_TRACE(sigar)) {
+                sigar_log_printf(sigar, SIGAR_LOG_TRACE, "sigar_file_system_list_get dir: %s fs: %s", ent.mnt_dir, ent.mnt_fsname);
+            }
+        }
+
+        endmntent(fp);
+	}
 
     return SIGAR_OK;
 }
@@ -1235,6 +1286,10 @@ static int get_iostat_sys(sigar_t *sigar,
     char stat[1025], dev[1025];
     char *name, *ptr, *fsdev;
     int partition, status;
+
+    if (SIGAR_LOG_IS_TRACE(sigar)) {
+        sigar_log_printf(sigar, SIGAR_LOG_TRACE, "get_iostat_sys ingress : %s", dirname);
+    }
 
     if (!(*iodev = sigar_iodev_get(sigar, dirname))) {
         return ENXIO;
@@ -1286,24 +1341,65 @@ static int get_iostat_proc_dstat(sigar_t *sigar,
     struct stat sb;
     int status=ENOENT;
 
+    if (SIGAR_LOG_IS_TRACE(sigar)) {
+        sigar_log_printf(sigar, SIGAR_LOG_TRACE, "get_iostat_proc_dstat ingress : %s", dirname);
+    }
+
     SIGAR_DISK_STATS_INIT(device_usage);
 
-    if (!(*iodev = sigar_iodev_get(sigar, dirname))) {
-        return ENXIO;
-    }
+    if (!sigar_is_in_container(sigar)) {
 
-    if (stat((*iodev)->name, &sb) < 0) {
-        return errno;
-    }
+        if (!(*iodev = sigar_iodev_get(sigar, dirname))) {
+            return ENXIO;
+        }
 
-    if (SIGAR_LOG_IS_DEBUG(sigar)) {
-        sigar_log_printf(sigar, SIGAR_LOG_DEBUG,
-                         PROC_DISKSTATS " %s -> %s [%d,%d]",
-                         dirname, (*iodev)->name,
-                         ST_MAJOR(sb), ST_MINOR(sb));
+        if (stat((*iodev)->name, &sb) < 0) {
+            return errno;
+        }
+
+        if (SIGAR_LOG_IS_DEBUG(sigar)) {
+            sigar_log_printf(sigar, SIGAR_LOG_DEBUG,
+                             PROC_DISKSTATS " %s -> %s [%d,%d]",
+                             dirname, (*iodev)->name,
+                             ST_MAJOR(sb), ST_MINOR(sb));
+        }
+    } else {
+        /*
+        * We are in a container.   We need to find the major and minor device number for the drive
+        * we found.   This is in eg:
+        * /sys/block/sda/sda1/dev
+        * The file contains a single line with major:minor device number.   We can use this to pull the
+        * disk stats from /proc/diskstats.
+        */
+        char raw_dev[1024];
+        const char *cptr;
+        cptr = dirname;
+        int i, num;
+        for (i = 0; *cptr && !isdigit(*cptr); cptr++,i++) {
+            raw_dev[i] = *cptr;
+        }
+        raw_dev[i] = '\0';
+        snprintf(buffer, sizeof(buffer), "/sys/block/%s/%s/dev", raw_dev, dirname);
+        if (!(fp = fopen(buffer, "r"))) {
+            return errno;
+        }
+        unsigned long major, minor;
+        ptr = fgets(buffer, sizeof(buffer), fp);
+        fclose(fp);
+        if (!ptr) {
+            return ENXIO;
+        }
+        num = sscanf(ptr, "%lu:%lu", &major, &minor);
+        if (num != 2) {
+            return ENXIO;
+        }
+        sb.st_rdev = makedev(major, minor);
     }
 
     if (!(fp = fopen(PROC_DISKSTATS, "r"))) {
+        if (SIGAR_LOG_IS_TRACE(sigar)) {
+            sigar_log_printf(sigar, SIGAR_LOG_TRACE, "FOPEN %s failed: %s", PROC_DISKSTATS);
+        }
         return errno;
     }
 
@@ -1323,6 +1419,10 @@ static int get_iostat_proc_dstat(sigar_t *sigar,
                 running, use, aveq;
 
             ptr = sigar_skip_token(ptr); /* name */
+
+            if (SIGAR_LOG_IS_TRACE(sigar)) {
+                sigar_log_printf(sigar, SIGAR_LOG_TRACE, "Scanning diskdata");
+            }
 
             num = sscanf(ptr,
                          "%lu %lu %lu %lu "
@@ -1390,6 +1490,10 @@ static int get_iostat_procp(sigar_t *sigar,
     char buffer[1025];
     char *ptr;
     struct stat sb;
+
+    if (SIGAR_LOG_IS_TRACE(sigar)) {
+        sigar_log_printf(sigar, SIGAR_LOG_TRACE, "get_iostat_procp ingress : %s", dirname);
+    }
 
     if (!(*iodev = sigar_iodev_get(sigar, dirname))) {
         return ENXIO;
@@ -1461,6 +1565,10 @@ int sigar_disk_usage_get(sigar_t *sigar, const char *name,
     sigar_iodev_t *iodev = NULL;
     sigar_disk_usage_t device_usage;
     SIGAR_DISK_STATS_INIT(disk);
+
+    if (SIGAR_LOG_IS_TRACE(sigar)) {
+        sigar_log_printf(sigar, SIGAR_LOG_TRACE, "sigar_disk_usage_get ingress : %s", name);
+    }
 
     /*
      * 2.2 has metrics /proc/stat, but wtf is the device mapping?
@@ -1548,6 +1656,10 @@ int sigar_file_system_usage_get(sigar_t *sigar,
                                 const char *dirname,
                                 sigar_file_system_usage_t *fsusage)
 {
+    if (SIGAR_LOG_IS_TRACE(sigar)) {
+        sigar_log_printf(sigar, SIGAR_LOG_TRACE, "sigar_file_system_usage_get ingress : %s", dirname);
+    }
+
     int status = sigar_statvfs(sigar, dirname, fsusage);
 
     if (status != SIGAR_OK) {
