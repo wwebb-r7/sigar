@@ -1236,6 +1236,10 @@ int sigar_file_system_list_get(sigar_t *sigar,
                 SIGAR_FILE_SYSTEM_LIST_GROW(fslist);
 
                 fsp = &fslist->data[fslist->number++];
+                /*
+                * Need to zero this since we are not using all the fields.
+                */
+                memset(fsp, 0, sizeof(*fsp));
 
                 fsp->type = SIGAR_FSTYPE_LOCAL_DISK;
                 SIGAR_SSTRCPY(fsp->dir_name, "/");
