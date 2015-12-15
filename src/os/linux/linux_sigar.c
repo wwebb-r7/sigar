@@ -3058,6 +3058,8 @@ int sigar_os_sys_info_get(sigar_t *sigar,
  * 3:cpu:/docker/58db180b111f8cbc4c08cb58c162c740c728c398cc54bec4586e38d058a028d6
  * There are numerous lines that may or may not contain a container name.  If we
  * hit any non-blank entry then we are in a container.
+ * AND the entry doesn't have an "=" sign in it..Thanks opensuse.
+ * eg: 1:name=systemd:/system
  */
 
 int sigar_os_is_in_container(sigar_t *sigar)
@@ -3073,6 +3075,11 @@ int sigar_os_is_in_container(sigar_t *sigar)
     }
 
     while ((ptr = fgets(buffer, sizeof(buffer), fp))) {
+		// Hack check for opensuse.
+        tmp_ptr = strstr(buffer, "=");
+        if (tmp_ptr) {
+            continue;
+        }
         tmp_ptr = strstr(buffer, ":/");
         if (!tmp_ptr) {
             continue;
