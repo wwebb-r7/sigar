@@ -26,6 +26,8 @@
 #include "sigar_util.h"
 #include "sigar_os.h"
 
+const char *gHostFSPrefix = NULL;
+
 #ifndef WIN32
 
 #include <dirent.h>
@@ -116,23 +118,92 @@ char *sigar_getword(char **line, char stop)
     return res;
 }
 
+/*
+ * Build the proc path string with 'host' prefix if provided.
+ * For caller convienence, if the pointer passed in is non-null
+ * we assume the path is already created and just return the value.
+ * Otherwise (the first time), build the path.  The caller should use
+ * a static variable for the path, or retain it in some way for the
+ * majority of the use cases.
+ */
+
+char *sigar_proc_path(char **path, char *prefix, char *suffix)
+{
+    char *ret_str = NULL;
+
+    if (*path) {
+        // Already allocated.
+        return *path;
+    }
+
+    // Build the path, checking to see if we have a host level prefix.
+
+    int len = 0;
+    if (gHostFSPrefix) {
+        len = strlen(gHostFSPrefix);
+        if (prefix) {
+           len += strlen(prefix);
+        }
+        if (suffix) {
+            len += strlen(suffix);
+        }
+        ret_str = malloc(len + 1);
+        strcpy(ret_str, gHostFSPrefix);
+        if (prefix) {
+            strcat(ret_str, prefix);
+        }
+        if (suffix) {
+            strcat(ret_str, suffix);
+        }
+    } else {
+        if (prefix) {
+            len += strlen(prefix);
+        }
+        if (suffix) {
+            len += strlen(suffix);
+        }
+        ret_str = calloc(1, len + 1);
+        if (prefix) {
+            strcpy(ret_str, prefix);
+        }
+        if (suffix) {
+            strcat(ret_str, suffix);
+        }
+    }
+
+    *path = ret_str;
+
+    return *path;
+}
+
 /* avoiding sprintf */
 
 char *sigar_proc_filename(char *buffer, int buflen,
                           sigar_pid_t bigpid,
                           const char *fname, int fname_len)
 {
+    char proc_path[PATH_MAX];
     int len = 0;
+    int proc_path_len = 0;
     char *ptr = buffer;
     unsigned int pid = (unsigned int)bigpid; /* XXX -- This isn't correct */
     char pid_buf[UITOA_BUFFER_SIZE];
     char *pid_str = sigar_uitoa(pid_buf, pid, &len);
 
-    assert((unsigned int)buflen >=
-           (SSTRLEN(PROCP_FS_ROOT) + UITOA_BUFFER_SIZE + fname_len + 1));
+    if (gHostFSPrefix) {
+        strcpy(proc_path, gHostFSPrefix);
+        strcat(proc_path, PROCP_FS_ROOT);
+    } else {
+        strcpy(proc_path, PROCP_FS_ROOT);
+    }
 
-    memcpy(ptr, PROCP_FS_ROOT, SSTRLEN(PROCP_FS_ROOT));
-    ptr += SSTRLEN(PROCP_FS_ROOT);
+    proc_path_len = strlen(proc_path);
+
+    assert((unsigned int)buflen >=
+           proc_path_len + UITOA_BUFFER_SIZE + fname_len + 1);
+
+    memcpy(ptr, proc_path, proc_path_len);
+    ptr += proc_path_len;
 
     memcpy(ptr, pid_str, len);
     ptr += len;
@@ -171,7 +242,17 @@ int sigar_proc_file2str(char *buffer, int buflen,
 int sigar_proc_list_procfs_get(sigar_t *sigar,
                                sigar_proc_list_t *proclist)
 {
-    DIR *dirp = opendir("/proc");
+    char proc_path[PATH_MAX];
+
+    if (gHostFSPrefix) {
+        strcpy(proc_path, gHostFSPrefix);
+        strcat(proc_path, "/proc");
+    } else {
+        strcpy(proc_path, "/proc");
+    }
+
+    DIR *dirp = opendir(proc_path);
+
     struct dirent *ent;
 #ifdef HAVE_READDIR_R
     struct dirent dbuf;
