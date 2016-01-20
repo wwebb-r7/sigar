@@ -129,6 +129,8 @@ typedef gid_t sigar_gid_t;
 
 typedef struct sigar_t sigar_t;
 
+SIGAR_DECLARE(void) sigar_set_host_fs_prefix(const char *prefix);
+
 SIGAR_DECLARE(int) sigar_open(sigar_t **sigar);
 
 SIGAR_DECLARE(int) sigar_close(sigar_t *sigar);
@@ -1048,6 +1050,8 @@ sigar_rma_get_average(sigar_rma_stat_t * rma,
                       int rate,
                       sigar_int64_t cur_time_sec,
                       int *result);
+
+SIGAR_DECLARE(int) sigar_check_for_container();
 
 #define SIGAR_CONTAINER_MODE_OFF    0 // Force container mode off.
 #define SIGAR_CONTAINER_MODE_ON     1 // Force container mode on.

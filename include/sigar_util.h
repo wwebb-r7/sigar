@@ -66,6 +66,13 @@
 #define PROCP_FS_ROOT "/proc/"
 #endif
 
+/*
+ * This is used in the event we want to prefix the standard FS location with
+ * a parent directory.   This is useful, for example, in a docker container.
+ */
+
+extern const char *gHostFSPrefix;
+
 sigar_int64_t sigar_time_now_millis(void);
 
 char *sigar_uitoa(char *buf, unsigned int n, int *len);
@@ -84,6 +91,8 @@ SIGAR_INLINE char *sigar_skip_token(char *p);
 SIGAR_INLINE char *sigar_skip_multiple_token(char *p, int count);
 
 int sigar_skip_file_lines(FILE *fp, int count);
+
+char *sigar_proc_path(char **path, char *prefix, char *suffix);
 
 char *sigar_getword(char **line, char stop);
 

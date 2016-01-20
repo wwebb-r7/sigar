@@ -45,6 +45,16 @@
 #include "sigar_os.h"
 #include "sigar_format.h"
 
+/*
+ * Set the Host system FS prefix.  If this is used, then it *must* be
+ * done before calling sigar_open
+ */
+
+SIGAR_DECLARE(void) sigar_set_host_fs_prefix(const char *prefix)
+{
+    gHostFSPrefix = prefix;
+}
+
 SIGAR_DECLARE(int) sigar_open(sigar_t **sigar)
 {
     int status = sigar_os_open(sigar);
@@ -2358,6 +2368,11 @@ SIGAR_DECLARE(int) sigar_fqdn_get(sigar_t *sigar, char *name, int namelen)
     }
 
     return SIGAR_OK;
+}
+
+SIGAR_DECLARE(int) sigar_check_for_container()
+{
+    return sigar_os_is_in_container(NULL);
 }
 
 SIGAR_DECLARE(void) sigar_set_container_mode(sigar_t *sigar, int mode)
