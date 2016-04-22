@@ -75,7 +75,7 @@
 #if defined(WIN32)
 #   define SIGAR_INLINE __inline
 #elif defined(__GNUC__)
-#   define SIGAR_INLINE inline
+#   define SIGAR_INLINE __attribute__ ((gnu_inline)) inline
 #else
 #   define SIGAR_INLINE
 #endif
