@@ -117,9 +117,9 @@ typedef long long sigar_int64_t;
 #endif
 
 #ifdef WIN32
-typedef sigar_uint64_t sigar_pid_t;
-typedef unsigned long sigar_uid_t;
-typedef unsigned long sigar_gid_t;
+typedef sigar_uint32_t sigar_pid_t;
+typedef sigar_uint32_t sigar_uid_t;
+typedef sigar_uint32_t sigar_gid_t;
 #else
 #include <sys/types.h>
 typedef pid_t sigar_pid_t;
