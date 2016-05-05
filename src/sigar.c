@@ -651,7 +651,7 @@ sigar_file_system_ping(sigar_t *sigar,
                        sigar_file_system_t *fs)
 {
     int status = SIGAR_OK;
-#ifndef WIN32
+#ifdef HAVE_RPC_RPC_H
     char *ptr;
 
     if ((fs->type == SIGAR_FSTYPE_NETWORK) &&
