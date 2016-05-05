@@ -91,10 +91,10 @@ fi
 
 AC_SEARCH_LIBS(dlpi_open, dlpi)
 
-INCLUDES="-I\$(top_srcdir)/include -I\$(top_srcdir)/src/os/$SRC_OS $SIGAR_INCLUDES"
+AM_CPPFLAGS="-I\$(top_srcdir)/include -I\$(top_srcdir)/src/os/$SRC_OS $SIGAR_AM_CPPFLAGS"
 
 AC_SUBST(SRC_OS)
-AC_SUBST(INCLUDES)
+AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(SIGAR_LIBS)
 
 AM_CONDITIONAL(OS_WIN32, test x$SRC_OS = xwin32)
