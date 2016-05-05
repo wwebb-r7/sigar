@@ -90,7 +90,7 @@ JNI_OnLoad(JavaVM *vm, void *reserved)
     char *options =
         getenv("DMALLOC_OPTIONS");
     if (!options) {
-        options = 
+        options =
             "debug=0x4f47d03,"
             "lockon=20,"
             "log=dmalloc-sigar.log";
@@ -136,7 +136,7 @@ static void sigar_throw_error(JNIEnv *env, jni_sigar_t *jsigar, int err)
     jclass errorClass;
     int err_type = err;
 
-    /* 
+    /*
      * support:
      * #define SIGAR_EPERM_KMEM (SIGAR_OS_START_ERROR+EACCES)
      * this allows for os impl specific message
@@ -257,7 +257,7 @@ int jsigar_list_add(void *data, char *value, int len)
     jsigar_list_t *obj = (jsigar_list_t *)data;
     JNIEnv *env = obj->env;
 
-    JENV->CallBooleanMethod(env, obj->obj, obj->id,  
+    JENV->CallBooleanMethod(env, obj->obj, obj->id,
                             JENV->NewStringUTF(env, value));
 
     return JENV->ExceptionCheck(env) ? !SIGAR_OK : SIGAR_OK;
@@ -300,7 +300,7 @@ JNIEXPORT void SIGAR_JNIx(open)
     memset(jsigar, '\0', sizeof(*jsigar));
 
     sigar_set_pointer(env, obj, jsigar);
-        
+
     /* this method is called by the constructor.
      * if != SIGAR_OK save status and throw exception
      * when methods are invoked (see sigar_get_pointer).
@@ -709,7 +709,7 @@ static int jni_env_getall(void *data,
     jni_env_put_t *put = (jni_env_put_t *)data;
     JNIEnv *env = put->env;
 
-    JENV->CallObjectMethod(env, put->map, put->id,  
+    JENV->CallObjectMethod(env, put->map, put->id,
                            JENV->NewStringUTF(env, key),
                            JENV->NewStringUTF(env, val));
 
@@ -1274,7 +1274,7 @@ typedef struct {
     JNIEnv *env;
     jobject obj;
     jclass cls;
-    jmethodID id;    
+    jmethodID id;
 } jni_ptql_re_data_t;
 
 static int jsigar_ptql_re_impl(void *data,
@@ -1294,7 +1294,7 @@ static int jsigar_ptql_re_impl(void *data,
         }
     }
 
-    return JENV->CallStaticBooleanMethod(env, re->cls, re->id,  
+    return JENV->CallStaticBooleanMethod(env, re->cls, re->id,
                                          JENV->NewStringUTF(env, haystack),
                                          JENV->NewStringUTF(env, needle));
 }
@@ -1447,149 +1447,6 @@ JNIEXPORT jlongArray SIGAR_JNI(ptql_SigarProcessQuery_find)
     return procarray;
 }
 
-#include "sigar_getline.h"
-
-JNIEXPORT jboolean SIGAR_JNI(util_Getline_isatty)
-(JNIEnv *env, jclass cls)
-{
-    return sigar_isatty(sigar_fileno(stdin)) ? JNI_TRUE : JNI_FALSE;
-}
-
-JNIEXPORT jstring SIGAR_JNI(util_Getline_getline)
-(JNIEnv *env, jobject sigar_obj, jstring prompt)
-{
-    const char *prompt_str;
-    char *line;
-    jboolean is_copy;
-
-    prompt_str = JENV->GetStringUTFChars(env, prompt, &is_copy);
-
-    line = sigar_getline((char *)prompt_str);
-
-    if (is_copy) {
-        JENV->ReleaseStringUTFChars(env, prompt, prompt_str);
-    }
-
-    if ((line == NULL) ||
-        sigar_getline_eof())
-    {
-        jclass eof_ex = JENV->FindClass(env, "java/io/EOFException");
-        JENV->ThrowNew(env, eof_ex, "");
-        return NULL;
-    }
-
-    return JENV->NewStringUTF(env, line);
-}
-
-JNIEXPORT void SIGAR_JNI(util_Getline_histadd)
-(JNIEnv *env, jobject sigar_obj, jstring hist)
-{
-    const char *hist_str;
-    jboolean is_copy;
-
-    hist_str = JENV->GetStringUTFChars(env, hist, &is_copy);
-
-    sigar_getline_histadd((char *)hist_str);
-
-    if (is_copy) {
-        JENV->ReleaseStringUTFChars(env, hist, hist_str);
-    }
-}
-
-JNIEXPORT void SIGAR_JNI(util_Getline_histinit)
-(JNIEnv *env, jobject sigar_obj, jstring hist)
-{
-    const char *hist_str;
-    jboolean is_copy;
-
-    hist_str = JENV->GetStringUTFChars(env, hist, &is_copy);
-
-    sigar_getline_histinit((char *)hist_str);
-
-    if (is_copy) {
-        JENV->ReleaseStringUTFChars(env, hist, hist_str);
-    }
-}
-
-static struct {
-    JNIEnv *env;
-    jobject obj;
-    jmethodID id;
-    jclass clazz;
-} jsigar_completer;
-
-static int jsigar_getline_completer(char *buffer, int offset, int *pos)
-{
-    JNIEnv *env = jsigar_completer.env;
-    jstring jbuffer;
-    jstring completion;
-    const char *line;
-    int len, cur;
-    jboolean is_copy;
-
-    jbuffer = JENV->NewStringUTF(env, buffer);
-
-    completion = 
-        JENV->CallObjectMethod(env, jsigar_completer.obj,
-                               jsigar_completer.id, jbuffer);
-
-    if (JENV->ExceptionCheck(env)) {
-        JENV->ExceptionDescribe(env);
-        return 0;
-    }
-
-    if (!completion) {
-        return 0;
-    }
-
-    line = JENV->GetStringUTFChars(env, completion, &is_copy);
-    len = JENV->GetStringUTFLength(env, completion);
-
-    cur = *pos;
-
-    if (len != cur) {
-        strcpy(buffer, line);
-        *pos = len;
-    }
-
-    if (is_copy) {
-        JENV->ReleaseStringUTFChars(env, completion, line);
-    }
-
-    return cur;
-}
-
-JNIEXPORT void SIGAR_JNI(util_Getline_setCompleter)
-(JNIEnv *env, jclass classinstance, jobject completer)
-{
-    if (completer == NULL) {
-        sigar_getline_completer_set(NULL);
-        return;
-    }
-    
-    jsigar_completer.env = env;
-    jsigar_completer.obj = completer;
-    jsigar_completer.clazz = JENV->GetObjectClass(env, completer);
-    jsigar_completer.id =
-        JENV->GetMethodID(env, jsigar_completer.clazz,
-                          "complete",
-                          "(Ljava/lang/String;)Ljava/lang/String;");
-
-    sigar_getline_completer_set(jsigar_getline_completer);
-}
-
-JNIEXPORT void SIGAR_JNI(util_Getline_redraw)
-(JNIEnv *env, jobject obj)
-{
-    sigar_getline_redraw();
-}
-
-JNIEXPORT void SIGAR_JNI(util_Getline_reset)
-(JNIEnv *env, jobject obj)
-{
-    sigar_getline_reset();
-}
-
 static const char *log_methods[] = {
     "fatal", /* SIGAR_LOG_FATAL */
     "error", /* SIGAR_LOG_ERROR */
@@ -1739,7 +1596,7 @@ JNIEXPORT jboolean SIGAR_JNI(win32_FileVersion_gather)
                           "Ljava/util/Map;");
     hashmap = JENV->GetObjectField(env, obj, id);
     put.env = env;
-    put.id = 
+    put.id =
         JENV->GetMethodID(env,
                           JENV->GetObjectClass(env, hashmap),
                           "put", MAP_PUT_SIG);
