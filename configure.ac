@@ -66,7 +66,7 @@ case $host_os in
      *linux*)
      SRC_OS="linux"
      AC_DEFINE(SIGAR_TEST_OS_LINUX, [1], [for the tests])
-      CFLAGS="$CFLAGS -D_DEFAULT_SOURCE"
+      CFLAGS="$CFLAGS -D_DEFAULT_SOURCE -D_GNU_SOURCE"
      ;;
      *solaris*)
      AC_DEFINE(SOLARIS,[],[running on Solaris])
