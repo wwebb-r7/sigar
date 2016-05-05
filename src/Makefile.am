@@ -1,6 +1,6 @@
 SUBDIRS = os
 
-INCLUDES = @INCLUDES@
+AM_CPPFLAGS = @AM_CPPFLAGS@
 
 lib_LTLIBRARIES = libsigar.la
 
