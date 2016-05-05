@@ -1,4 +1,4 @@
-INCLUDES=@INCLUDES@
+AM_CPPFLAGS=@AM_CPPFLAGS@
 
 lib_LTLIBRARIES=
 TESTS=
@@ -17,7 +17,7 @@ sigar_la_SOURCES =\
 	sigar-swap.c \
 	sigar-sysinfo.c \
 	sigar-version.c \
-	sigar-who.c 
+	sigar-who.c
 
 sigar_la_CPPFLAGS = ${LUA_CFLAGS}
 sigar_la_LDFLAGS  = $(AM_LDFLAGS) -module -avoid-version
@@ -34,5 +34,5 @@ TESTS_ENVIRONMENT = \
 	LUA_PATH="${srcdir}/?.lua" \
 	LUA_CPATH="${builddir}/.libs/?.so" \
 	DYLD_LIBRARY_PATH="${top_builddir}/src/.libs/" \
-	lua 
+	lua
 

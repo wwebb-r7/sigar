@@ -1,4 +1,4 @@
-INCLUDES = @INCLUDES@
+AM_CPPFLAGS = @AM_CPPFLAGS@
 
 SIGAR_OS_SRCS = peb.c win32_sigar.c wmi.cpp
 
