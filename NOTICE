@@ -14,11 +14,11 @@ limitations under the License.
 
 ADDITIONAL LICENSE INFORMATION:
 
-Hyperic SIGAR includes some third-party open source components 
-in its distribution. The list below identifies the community or 
+Hyperic SIGAR includes some third-party open source components
+in its distribution. The list below identifies the community or
 organization and links to their appropriate license terms.
 
-The Hyperic team would like to thank all the communities 
+The Hyperic team would like to thank all the communities
 of the projects listed below for their contributions.
 
 ----------------------------------------------------------
@@ -42,7 +42,7 @@ Information: http://apr.apache.org/
 License: http://www.apache.org/licenses/LICENSE-2.0
 
 ----------------------------------------------------------
-Components under BSD/MIT Style Licenses: 
+Components under BSD/MIT Style Licenses:
 ----------------------------------------------------------
 
 The following components are included with modification:
@@ -74,10 +74,6 @@ to the following restrictions:
    misrepresented as being the original software.
 
 4. This notice may not be removed or altered.
-
-- getline by Chris Thewalt -
-Information: http://tinyurl.com/r438r
-License: within src/sigar_getline.c
 
 Copyright (C) 1991, 1992 by Chris Thewalt (thewalt@ce.berkeley.edu)
 
